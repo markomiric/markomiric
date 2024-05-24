@@ -1,8 +1,7 @@
 ### Hi there 👋
 
 
-<!--START_SECTION:waka-->
-<!--END_SECTION:waka-->
+<figure><embed src="https://wakatime.com/share/@634e02f6-813f-4879-a546-4460d89a2d42/204c5b98-81ff-4fb7-b56f-518339569b25.svg"></embed></figure>
 
 <!--
 **markomiric/markomiric** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
