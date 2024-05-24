@@ -1,6 +1,9 @@
 ### Hi there 👋
 
 
+<!--START_SECTION:waka-->
+<!--END_SECTION:waka-->
+
 <!--
 **markomiric/markomiric** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 [![Marko's GitHub stats](https://github-readme-stats.vercel.app/api?username=markomiric&show_icons=true&theme=github_dark&hide=stars,issues,contribs&show=prs_merged)](https://github.com/anuraghazra/github-readme-stats)
