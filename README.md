@@ -1,20 +1,11 @@
-### Hi there 👋
+### Marko Mirić | Backend, Cloud & Gen-AI Builder 🛠️☁️🤖
 
+👋  Hi, I’m Marko — turning raw documents & tough specs into resilient microservices and smart copilots.  
+🧠  Recent wins:  
+   • Automated invoice ingestion → OCR + LLM extraction → draft bookkeeping entries (80 % faster).  
+   • Built a RAG engine for an invoicing-automation platform:** accountants can type “What is the payment due date for invoice #4523?” and receive an instant answer sourced from scanned invoices, supplier contracts, and payment-terms data.
+🚀  Fav tools: FastAPI • Spring Boot • LangChain • AWS Lambda • Docker.  
+🌱 Shipping compact, fine-tuned LLMs as serverless micro-APIs, with Prometheus + Grafana tracking their pulse.  
+⚡ Fun fact: I treat latency like high-interest technical debt—the longer you ignore it, the steeper the price.
 
-<figure><embed src="https://wakatime.com/share/@634e02f6-813f-4879-a546-4460d89a2d42/204c5b98-81ff-4fb7-b56f-518339569b25.svg"></embed></figure>
-
-<!--
-**markomiric/markomiric** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-[![Marko's GitHub stats](https://github-readme-stats.vercel.app/api?username=markomiric&show_icons=true&theme=github_dark&hide=stars,issues,contribs&show=prs_merged)](https://github.com/anuraghazra/github-readme-stats)
-
-Here are some ideas to get you started:
-
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+💌  Let’s connect & build something awesome!
