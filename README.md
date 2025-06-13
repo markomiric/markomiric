@@ -1,4 +1,4 @@
-### Marko Mirić | Backend, Cloud & Gen-AI Builder 🛠️☁️🤖
+### Backend, Cloud & Gen-AI Builder 🛠️☁️🤖
 
 👋  Hi, I’m Marko — turning raw documents & tough specs into resilient microservices and smart copilots.  
 🧠  Recent wins:  
