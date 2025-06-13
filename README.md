@@ -4,8 +4,6 @@
 🧠  Recent wins:  
    • Automated invoice ingestion → OCR + LLM extraction → draft bookkeeping entries (80 % faster).  
    • Built a RAG engine for an invoicing-automation platform.  
-🚀  Fav tools: FastAPI • Spring Boot • LangChain • AWS Lambda • Docker.  
-🌱 Shipping compact, fine-tuned LLMs as serverless micro-APIs, with Prometheus + Grafana tracking their pulse.  
-⚡ Fun fact: I treat latency like high-interest technical debt — the longer you ignore it, the steeper the price.
+🚀  Fav tools: FastAPI • Spring Boot • Next.js • LangChain • AWS Lambda • Docker.  
 
 💌  Let’s connect & build something awesome!
