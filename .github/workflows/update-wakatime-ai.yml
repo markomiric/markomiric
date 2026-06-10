@@ -1,4 +1,4 @@
-name: Update WakaTime AI metrics
+name: Update AI dashboard
 
 on:
   workflow_dispatch:
@@ -9,21 +9,39 @@ permissions:
   contents: write
 
 jobs:
-  update-readme:
+  update-dashboard:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Update README metrics
+      - name: Render dashboard
         env:
-          WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
+          AI_DASHBOARD_AI_SHARE: ${{ vars.AI_DASHBOARD_AI_SHARE }}
+          AI_DASHBOARD_AI_CHANGES: ${{ vars.AI_DASHBOARD_AI_CHANGES }}
+          AI_DASHBOARD_HUMAN_CHANGES: ${{ vars.AI_DASHBOARD_HUMAN_CHANGES }}
+          AI_DASHBOARD_CHANGE_UNIT: ${{ vars.AI_DASHBOARD_CHANGE_UNIT }}
+          AI_DASHBOARD_TOKENS: ${{ vars.AI_DASHBOARD_TOKENS }}
+          AI_DASHBOARD_INPUT_TOKENS: ${{ vars.AI_DASHBOARD_INPUT_TOKENS }}
+          AI_DASHBOARD_OUTPUT_TOKENS: ${{ vars.AI_DASHBOARD_OUTPUT_TOKENS }}
+          AI_DASHBOARD_COST: ${{ vars.AI_DASHBOARD_COST }}
+          AI_DASHBOARD_COST_LABEL: ${{ vars.AI_DASHBOARD_COST_LABEL }}
+          AI_DASHBOARD_HUMAN_REVIEW_RATE: ${{ vars.AI_DASHBOARD_HUMAN_REVIEW_RATE }}
+          AI_DASHBOARD_REVIEW_SESSIONS: ${{ vars.AI_DASHBOARD_REVIEW_SESSIONS }}
+          AI_DASHBOARD_PROMPTS: ${{ vars.AI_DASHBOARD_PROMPTS }}
+          AI_DASHBOARD_PROMPT_DEPTH: ${{ vars.AI_DASHBOARD_PROMPT_DEPTH }}
+          AI_DASHBOARD_TOP_AGENT: ${{ vars.AI_DASHBOARD_TOP_AGENT }}
+          AI_DASHBOARD_MODEL_MIX: ${{ vars.AI_DASHBOARD_MODEL_MIX }}
+          AI_DASHBOARD_FOLLOW_UP_RATE: ${{ vars.AI_DASHBOARD_FOLLOW_UP_RATE }}
+          AI_DASHBOARD_FOLLOW_UP_LABEL: ${{ vars.AI_DASHBOARD_FOLLOW_UP_LABEL }}
+          AI_DASHBOARD_POSITIONING: ${{ vars.AI_DASHBOARD_POSITIONING }}
+          AI_DASHBOARD_SOURCE_LABEL: ${{ vars.AI_DASHBOARD_SOURCE_LABEL }}
         run: python3 scripts/update_wakatime_ai.py
 
-      - name: Commit profile dashboard changes
+      - name: Commit dashboard changes
         run: |
           if git diff --quiet README.md assets/ai-native-dashboard.svg; then
-            echo "No profile dashboard changes."
+            echo "No dashboard changes."
             exit 0
           fi
 
