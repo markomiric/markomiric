@@ -97,24 +97,38 @@ def render_section(stats: dict[str, Any]) -> str:
     updated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     lines = [
-        "<!-- Updated automatically by scripts/update_wakatime_ai.py -->",
-        f"- WakaTime range: `{WAKATIME_RANGE.replace('_', ' ')}`",
-        f"- Total tracked: **{human_total}**",
+        "**Engineering pulse**",
+        "",
+        "| Metric | Value |",
+        "| --- | --- |",
+        f"| WakaTime window | {table_cell(display_range(WAKATIME_RANGE))} |",
+        f"| Total tracked | **{table_cell(human_total)}** |",
     ]
 
     if best["seconds"] > 0 and total_seconds > 0:
-        percentage = best["seconds"] / total_seconds * 100
+        displayed_seconds = min(best["seconds"], total_seconds)
+        percentage = min(displayed_seconds / total_seconds * 100, 100.0)
         lines.append(
-            "- AI/tooling signal: "
-            f"**{format_duration(best['seconds'])}** ({percentage:.1f}%) "
-            f"from WakaTime `{best['dimension']}` entries matched by keyword"
+            "| AI-assisted signal | "
+            f"**{table_cell(format_duration(displayed_seconds))}** "
+            f"({format_percentage(percentage)}) |"
         )
-        lines.append(f"- Matching signals: {format_matches(best['matches'])}")
+        lines.append(
+            "| Matched source | "
+            f"{table_cell(format_dimension(best['dimension']))}: "
+            f"{table_cell(format_matches(best['matches'], displayed_seconds))} |"
+        )
     else:
-        lines.append("- AI/tooling signal: no keyword-matched WakaTime entries in this range")
-        lines.append(f"- Matching keywords: `{', '.join(AI_KEYWORDS)}`")
+        lines.append("| AI-assisted signal | No matching entries in this range |")
+        lines.append(f"| Matching keywords | {table_cell(', '.join(AI_KEYWORDS))} |")
 
-    lines.append(f"- Last updated: {updated_at}")
+    lines.extend(
+        [
+            f"| Updated | {updated_at} |",
+            "",
+            "<sub>AI-assisted signal is estimated from WakaTime entries whose names match configured AI/tooling keywords.</sub>",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -172,13 +186,41 @@ def is_ai_signal(name: str) -> bool:
     return False
 
 
-def format_matches(matches: list[tuple[str, float]]) -> str:
+def display_range(value: str) -> str:
+    return value.replace("_", " ").capitalize()
+
+
+def format_dimension(dimension: str) -> str:
+    return f"WakaTime {dimension.replace('_', ' ')}"
+
+
+def format_matches(matches: list[tuple[str, float]], displayed_total: float) -> str:
     if not matches:
         return "none"
-    top_matches = matches[:5]
-    return ", ".join(
-        f"`{name}` ({format_duration(seconds)})" for name, seconds in top_matches
-    )
+
+    top_matches = matches[:3]
+    formatted = []
+    remaining_seconds = displayed_total
+
+    for index, (name, seconds) in enumerate(top_matches):
+        shown_seconds = min(seconds, remaining_seconds) if index == 0 else seconds
+        formatted.append(f"{name} ({format_duration(shown_seconds)})")
+        remaining_seconds = max(remaining_seconds - shown_seconds, 0)
+
+    if len(matches) > len(top_matches):
+        formatted.append(f"+{len(matches) - len(top_matches)} more")
+
+    return ", ".join(formatted)
+
+
+def format_percentage(percentage: float) -> str:
+    if percentage >= 99.95:
+        return "100%"
+    return f"{percentage:.1f}%"
+
+
+def table_cell(value: Any) -> str:
+    return str(value).replace("\n", " ").replace("|", "\\|")
 
 
 def update_readme(section: str) -> None:
