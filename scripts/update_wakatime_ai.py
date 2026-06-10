@@ -24,20 +24,19 @@ WAKATIME_BASE_URL = os.environ.get(
 
 DEFAULTS = {
     "AI_DASHBOARD_AI_CHANGES": "18.7K",
-    "AI_DASHBOARD_HUMAN_CHANGES": "0",
     "AI_DASHBOARD_CHANGE_UNIT": "line changes",
     "AI_DASHBOARD_TOKENS": "939.8M",
     "AI_DASHBOARD_INPUT_TOKENS": "936.8M in",
     "AI_DASHBOARD_OUTPUT_TOKENS": "3M out",
     "AI_DASHBOARD_COST": "$2,628",
-    "AI_DASHBOARD_COST_LABEL": "estimated agentic build budget",
+    "AI_DASHBOARD_COST_LABEL": "estimated WakaTime GenAI cost",
     "AI_DASHBOARD_PROMPTS": "234 prompts",
     "AI_DASHBOARD_PROMPT_DEPTH": "2.4K chars avg prompt",
     "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
     "AI_DASHBOARD_MODEL_MIX": "Claude 68% · Codex 32%",
+    "AI_DASHBOARD_SESSIONS": "246 AI sessions",
     "AI_DASHBOARD_REVIEW_POSTURE": "Human-led",
     "AI_DASHBOARD_REVIEW_POSTURE_LABEL": "architecture, debugging, release decisions",
-    "AI_DASHBOARD_SESSIONS": "246 AI sessions",
     "AI_DASHBOARD_POSITIONING": "AI-native engineer: agents for throughput, human judgment for correctness.",
     "AI_DASHBOARD_SOURCE_LABEL": "configured rolling telemetry",
 }
@@ -121,36 +120,22 @@ def has_wakatime_ai_fields(stats: dict[str, Any]) -> bool:
 
 
 def build_fallback_metrics() -> dict[str, Any]:
-    ai_changes = env_value("AI_DASHBOARD_AI_CHANGES")
-    human_changes = env_value("AI_DASHBOARD_HUMAN_CHANGES")
-    ai_share = env_value("AI_DASHBOARD_AI_SHARE", "")
-
-    if ai_share:
-        ai_percentage = clamp(parse_percentage(ai_share), 0, 100)
-    else:
-        ai_count = parse_count(ai_changes)
-        human_count = parse_count(human_changes)
-        total_count = ai_count + human_count
-        ai_percentage = clamp(ai_count / total_count * 100, 0, 100) if total_count else 0
-
     return {
-        "ai_changes": ai_changes,
-        "human_changes": human_changes,
+        "ai_changes": env_value("AI_DASHBOARD_AI_CHANGES"),
         "change_unit": env_value("AI_DASHBOARD_CHANGE_UNIT"),
-        "ai_percentage": ai_percentage,
-        "human_percentage": max(100 - ai_percentage, 0),
+        "ai_percentage": clamp(parse_percentage(env_value("AI_DASHBOARD_AI_SHARE", "100")), 0, 100),
         "tokens": env_value("AI_DASHBOARD_TOKENS"),
         "input_tokens": env_value("AI_DASHBOARD_INPUT_TOKENS"),
         "output_tokens": env_value("AI_DASHBOARD_OUTPUT_TOKENS"),
         "cost": env_value("AI_DASHBOARD_COST"),
         "cost_label": env_value("AI_DASHBOARD_COST_LABEL"),
-        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
-        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "sessions": env_value("AI_DASHBOARD_SESSIONS"),
         "prompts": env_value("AI_DASHBOARD_PROMPTS"),
         "prompt_depth": env_value("AI_DASHBOARD_PROMPT_DEPTH"),
         "top_agent": env_value("AI_DASHBOARD_TOP_AGENT"),
         "model_mix": env_value("AI_DASHBOARD_MODEL_MIX"),
+        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
+        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "positioning": env_value("AI_DASHBOARD_POSITIONING"),
         "source_label": env_value("AI_DASHBOARD_SOURCE_LABEL"),
         "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
@@ -181,22 +166,20 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "ai_changes": format_compact(ai_lines),
-        "human_changes": format_compact(human_lines),
         "change_unit": "line changes",
         "ai_percentage": ai_percentage,
-        "human_percentage": max(100 - ai_percentage, 0),
         "tokens": format_compact(total_tokens),
         "input_tokens": f"{format_compact(input_tokens)} in",
         "output_tokens": f"{format_compact(output_tokens)} out",
         "cost": format_currency(cost),
         "cost_label": "estimated WakaTime GenAI cost",
-        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
-        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "sessions": f"{format_compact(sessions)} AI sessions",
         "prompts": f"{format_compact(prompt_count)} prompts",
         "prompt_depth": f"{format_compact(prompt_length)} chars avg prompt",
         "top_agent": top_agent_label(agents),
         "model_mix": agent_mix_label(agents),
+        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
+        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "positioning": env_value("AI_DASHBOARD_POSITIONING"),
         "source_label": f"WakaTime AI telemetry · {display_range(WAKATIME_RANGE)}",
         "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
@@ -243,8 +226,7 @@ def normalize_agent_breakdown(stats: dict[str, Any]) -> list[dict[str, float | s
 def top_agent_label(agents: list[dict[str, float | str]]) -> str:
     if not agents:
         return "No agent signal yet"
-    names = [str(agent["name"]) for agent in agents[:2]]
-    return " + ".join(names)
+    return " + ".join(str(agent["name"]) for agent in agents[:2])
 
 
 def agent_mix_label(agents: list[dict[str, float | str]]) -> str:
@@ -297,7 +279,6 @@ def render_svg(metrics: dict[str, Any]) -> str:
     <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7AA2FF"/><stop offset="1" stop-color="#3D6DFF"/></linearGradient>
     <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#69D391"/><stop offset="1" stop-color="#2EAD68"/></linearGradient>
     <linearGradient id="panelGlow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#142033"/><stop offset="1" stop-color="#0E1520"/></linearGradient>
-    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#020617" flood-opacity="0.35"/></filter>
   </defs>
   <style>
     .bg {{ fill: #090E16; }}
@@ -327,15 +308,15 @@ def render_svg(metrics: dict[str, Any]) -> str:
     <text class="eyebrow" x="130" y="189" text-anchor="middle" font-size="13">AI-driven</text>
 
     <circle class="blue" cx="252" cy="91" r="4"/>
-    <text class="eyebrow" x="267" y="96" font-size="13">AI-authored</text>
-    <text class="text" x="292" y="99" font-size="20">{xml(metrics['ai_changes'])}</text>
+    <text class="eyebrow" x="267" y="96" font-size="13">AI-authored changes</text>
+    <text class="text" x="445" y="99" font-size="20">{xml(metrics['ai_changes'])}</text>
     <line class="track" x1="252" y1="123" x2="1080" y2="123"/>
     <line class="barBlue" x1="252" y1="123" x2="{252 + ai_width}" y2="123"/>
     <text class="muted" x="1110" y="128" text-anchor="end" font-size="15">{xml(ai_display)}</text>
 
     <circle class="green" cx="252" cy="164" r="4"/>
     <text class="eyebrow" x="267" y="169" font-size="13">Review posture</text>
-    <text class="text" x="388" y="172" font-size="20">{xml(metrics['review_posture'])}</text>
+    <text class="text" x="405" y="172" font-size="20">{xml(metrics['review_posture'])}</text>
     <line class="track" x1="252" y1="196" x2="1080" y2="196"/>
     <line class="barGreen" x1="252" y1="196" x2="1080" y2="196"/>
     <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">human-owned</text>
@@ -401,10 +382,6 @@ def render_svg(metrics: dict[str, Any]) -> str:
 </svg>
 '''
 
-
-
-def display_range(value: str) -> str:
-    return value.replace("_", " ").title()
 
 def env_value(name: str, default: str | None = None) -> str:
     value = os.environ.get(name)
@@ -479,8 +456,6 @@ def trim_decimal(value: float) -> str:
 
 
 def format_currency(value: float) -> str:
-    if value >= 1000:
-        return f"${value:,.0f}"
     if value >= 100:
         return f"${value:,.0f}"
     return f"${value:,.2f}"
@@ -491,6 +466,10 @@ def format_percentage(value: float) -> str:
     if abs(value - round(value)) < 0.05:
         return f"{round(value)}%"
     return f"{value:.1f}%"
+
+
+def display_range(value: str) -> str:
+    return value.replace("_", " ").title()
 
 
 def clamp(value: float, minimum: float, maximum: float) -> float:
