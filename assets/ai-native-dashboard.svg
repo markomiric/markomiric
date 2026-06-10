@@ -1,55 +1,108 @@
-<svg width="1200" height="620" viewBox="0 0 1200 620" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">AI-native engineering dashboard</title>
-  <desc id="desc">AI-native engineering positioning dashboard for Marko Mirić.</desc>
+  <desc id="desc">Agentic engineering telemetry dashboard for Marko Miric.</desc>
   <defs>
     <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7AA2FF"/><stop offset="1" stop-color="#3D6DFF"/></linearGradient>
-    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#70E0A2"/><stop offset="1" stop-color="#35B779"/></linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#69D391"/><stop offset="1" stop-color="#2EAD68"/></linearGradient>
+    <linearGradient id="panelGlow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#142033"/><stop offset="1" stop-color="#0E1520"/></linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#020617" flood-opacity="0.35"/></filter>
   </defs>
   <style>
-    .bg { fill: #0B111B; }
-    .panel { fill: #101722; stroke: #253244; stroke-width: 1; }
-    .muted { fill: #94A3B8; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; font-weight: 700; }
-    .text { fill: #E5E7EB; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; font-weight: 800; }
-    .small { fill: #7C8799; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; font-weight: 700; }
-    .mono { fill: #AAB4C5; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; }
-    .track { stroke: #202938; stroke-width: 5; stroke-linecap: round; }
-    .barBlue { stroke: url(#blue); stroke-width: 5; stroke-linecap: round; }
-    .barGreen { stroke: url(#green); stroke-width: 5; stroke-linecap: round; }
+    .bg { fill: #090E16; }
+    .panel { fill: url(#panelGlow); stroke: #233044; stroke-width: 1; }
+    .panel2 { fill: #101722; stroke: #263449; stroke-width: 1; }
+    .eyebrow { fill: #8D98AA; font-family: 'Aptos Display', 'Segoe UI', sans-serif; font-weight: 800; letter-spacing: .04em; }
+    .text { fill: #E7EAF0; font-family: 'Aptos Display', 'Segoe UI', sans-serif; font-weight: 850; }
+    .muted { fill: #8F9AAB; font-family: 'Aptos', 'Segoe UI', sans-serif; font-weight: 700; }
+    .mono { fill: #A9B4C4; font-family: 'SFMono-Regular', 'Cascadia Mono', 'Consolas', monospace; font-weight: 700; }
+    .track { stroke: #202938; stroke-width: 6; stroke-linecap: round; }
+    .barBlue { stroke: url(#blue); stroke-width: 6; stroke-linecap: round; }
+    .barGreen { stroke: url(#green); stroke-width: 6; stroke-linecap: round; }
+    .chipBlue { fill: #13264D; }
+    .chipGreen { fill: #123525; }
+    .blue { fill: #5D8AFF; }
+    .green { fill: #55C083; }
   </style>
-  <rect class="bg" width="1200" height="620" rx="24"/>
-  <rect class="panel" x="24" y="24" width="1152" height="248" rx="18"/>
-  <circle cx="135" cy="148" r="76" stroke="#202938" stroke-width="18"/>
-  <circle cx="135" cy="148" r="76" stroke="url(#blue)" stroke-width="18" stroke-linecap="round" stroke-dasharray="565.49 0" transform="rotate(-90 135 148)"/>
-  <text class="text" x="135" y="154" text-anchor="middle" font-size="46">100%</text>
-  <text class="muted" x="135" y="184" text-anchor="middle" font-size="13">AI-native index</text>
-  <text class="muted" x="260" y="75" font-size="14">AI-assisted signal</text>
-  <text class="text" x="260" y="104" font-size="26">100%</text>
-  <text class="text" x="372" y="104" font-size="22">AI Coding · 15h 37m</text>
-  <line class="track" x1="260" y1="128" x2="960" y2="128"/>
-  <line class="barBlue" x1="260" y1="128" x2="960" y2="128"/>
-  <text class="muted" x="1010" y="133" font-size="15">100%</text>
-  <text class="muted" x="260" y="170" font-size="14">Human-owned judgment</text>
-  <text class="text" x="260" y="199" font-size="26">Architecture · review · production calls</text>
-  <line class="track" x1="260" y1="224" x2="960" y2="224"/>
-  <text class="muted" x="1010" y="229" font-size="15">0%</text>
-  <rect class="panel" x="24" y="294" width="270" height="136" rx="16"/>
-  <text class="muted" x="48" y="336" font-size="14">Operating mode</text>
-  <text class="text" x="48" y="374" font-size="28">Agent-first</text>
-  <text class="small" x="48" y="404" font-size="13">Implementation accelerated by AI agents</text>
-  <rect class="panel" x="318" y="294" width="270" height="136" rx="16"/>
-  <text class="muted" x="342" y="336" font-size="14">Control layer</text>
-  <text class="text" x="342" y="374" font-size="28">Human-led</text>
-  <text class="small" x="342" y="404" font-size="13">Architecture, debugging, review, release</text>
-  <rect class="panel" x="612" y="294" width="270" height="136" rx="16"/>
-  <text class="muted" x="636" y="336" font-size="14">Primary stack signal</text>
-  <text class="text" x="636" y="374" font-size="24">TypeScript + Python</text>
-  <text class="small" x="636" y="404" font-size="13">WakaTime language mix</text>
-  <rect class="panel" x="906" y="294" width="270" height="136" rx="16"/>
-  <text class="muted" x="930" y="336" font-size="14">Focus surface</text>
-  <text class="text" x="930" y="374" font-size="24">Backend + AI tools</text>
-  <text class="small" x="930" y="404" font-size="13">Recent project signal</text>
-  <rect class="panel" x="24" y="452" width="1152" height="120" rx="16"/>
-  <text class="muted" x="48" y="493" font-size="14">Positioning</text>
-  <text class="text" x="48" y="529" font-size="26">AI-native software engineer: agents for throughput, human judgment for correctness.</text>
-  <text class="mono" x="48" y="555" font-size="12">WakaTime window: Last 7 Days · tracked signal: 15 hrs 37 mins · updated by GitHub Actions</text>
+
+  <rect class="bg" width="1200" height="700" rx="24"/>
+
+  <g filter="url(#softShadow)">
+    <rect class="panel" x="24" y="24" width="1152" height="258" rx="18"/>
+    <circle cx="130" cy="153" r="76" stroke="#1F2937" stroke-width="18"/>
+    <circle cx="130" cy="153" r="76" stroke="url(#blue)" stroke-width="18" stroke-linecap="round" stroke-dasharray="565.49 0.0" transform="rotate(-90 130 153)"/>
+    <text class="text" x="130" y="158" text-anchor="middle" font-size="46">100%</text>
+    <text class="eyebrow" x="130" y="189" text-anchor="middle" font-size="13">AI-driven</text>
+
+    <circle class="blue" cx="252" cy="91" r="4"/>
+    <text class="eyebrow" x="267" y="96" font-size="13">AI</text>
+    <text class="text" x="292" y="99" font-size="20">7.5K</text>
+    <line class="track" x1="252" y1="123" x2="1080" y2="123"/>
+    <line class="barBlue" x1="252" y1="123" x2="1080" y2="123"/>
+    <text class="muted" x="1110" y="128" text-anchor="end" font-size="15">100%</text>
+
+    <circle class="green" cx="252" cy="164" r="4"/>
+    <text class="eyebrow" x="267" y="169" font-size="13">Human edits</text>
+    <text class="text" x="372" y="172" font-size="20">0</text>
+    <line class="track" x1="252" y1="196" x2="1080" y2="196"/>
+    <line class="barGreen" x1="252" y1="196" x2="252" y2="196"/>
+    <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">0%</text>
+
+    <line x1="252" y1="226" x2="1080" y2="226" stroke="#1E2937"/>
+    <text class="mono" x="252" y="250" font-size="12">&lt;/&gt; 7.5K AI-authored line changes</text>
+  </g>
+
+  <g>
+    <rect class="panel2" x="24" y="306" width="360" height="152" rx="16"/>
+    <rect class="chipBlue" x="48" y="330" width="34" height="34" rx="8"/>
+    <text class="blue" x="65" y="352" text-anchor="middle" font-size="18">↔</text>
+    <text class="eyebrow" x="100" y="351" font-size="14">Tokens</text>
+    <text class="text" x="48" y="398" font-size="36">488.2M</text>
+    <line class="track" x1="48" y1="420" x2="340" y2="420"/>
+    <line class="barBlue" x1="48" y1="420" x2="340" y2="420"/>
+    <circle class="blue" cx="52" cy="443" r="4"/>
+    <text class="muted" x="66" y="448" font-size="13">486.7M in</text>
+    <circle fill="#93C5FD" cx="178" cy="443" r="4"/>
+    <text class="muted" x="192" y="448" font-size="13">1.6M out</text>
+
+    <rect class="panel2" x="420" y="306" width="360" height="152" rx="16"/>
+    <rect class="chipBlue" x="444" y="330" width="34" height="34" rx="8"/>
+    <text class="blue" x="461" y="352" text-anchor="middle" font-size="18">$</text>
+    <text class="eyebrow" x="496" y="351" font-size="14">Agent cost</text>
+    <text class="text" x="444" y="402" font-size="38">$1,435</text>
+    <text class="muted" x="444" y="432" font-size="14">estimated WakaTime GenAI cost</text>
+
+    <rect class="panel2" x="816" y="306" width="360" height="152" rx="16"/>
+    <rect class="chipGreen" x="840" y="330" width="34" height="34" rx="8"/>
+    <text class="green" x="857" y="352" text-anchor="middle" font-size="16">◉</text>
+    <text class="eyebrow" x="892" y="351" font-size="14">Human follow-up</text>
+    <text class="text" x="840" y="402" font-size="38">0%</text>
+    <line class="track" x1="840" y1="424" x2="1100" y2="424"/>
+    <line class="barGreen" x1="840" y1="424" x2="840" y2="424"/>
+    <text class="muted" x="840" y="450" font-size="14">0 human follow-up changes</text>
+  </g>
+
+  <g>
+    <rect class="panel2" x="24" y="482" width="270" height="126" rx="14"/>
+    <text class="eyebrow" x="48" y="518" font-size="13">AI sessions</text>
+    <text class="text" x="48" y="554" font-size="28">48</text>
+    <text class="muted" x="48" y="582" font-size="13">AI sessions</text>
+
+    <rect class="panel2" x="318" y="482" width="270" height="126" rx="14"/>
+    <text class="eyebrow" x="342" y="518" font-size="13">Prompt surface</text>
+    <text class="text" x="342" y="554" font-size="28">164 prompts</text>
+    <text class="muted" x="342" y="582" font-size="13">3.5K chars avg prompt</text>
+
+    <rect class="panel2" x="612" y="482" width="270" height="126" rx="14"/>
+    <text class="eyebrow" x="636" y="518" font-size="13">Top agent stack</text>
+    <text class="text" x="636" y="554" font-size="25">Claude + Codex</text>
+    <text class="muted" x="636" y="582" font-size="13">Claude 63% · Codex 37%</text>
+
+    <rect class="panel2" x="906" y="482" width="270" height="126" rx="14"/>
+    <text class="eyebrow" x="930" y="518" font-size="13">Positioning</text>
+    <text class="text" x="930" y="550" font-size="23">AI-native</text>
+    <text class="muted" x="930" y="580" font-size="13">agents for throughput</text>
+  </g>
+
+  <text class="text" x="24" y="654" font-size="24">AI-native engineer: agents for throughput, human judgment for correctness.</text>
+  <text class="mono" x="24" y="680" font-size="12">source: WakaTime AI telemetry · updated: 2026-06-10 15:48 UTC</text>
 </svg>
