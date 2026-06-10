@@ -36,10 +36,10 @@ DEFAULTS = {
     "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
     "AI_DASHBOARD_MODEL_MIX": "Claude 68% · Codex 32%",
     "AI_DASHBOARD_FOLLOW_UP_RATE": "0%",
-    "AI_DASHBOARD_FOLLOW_UP_LABEL": "follow-up edit loops",
+    "AI_DASHBOARD_FOLLOW_UP_LABEL": "manual corrections after AI",
     "AI_DASHBOARD_SESSIONS": "246 AI sessions",
     "AI_DASHBOARD_POSITIONING": "AI-native engineer: agents for throughput, human judgment for correctness.",
-    "AI_DASHBOARD_SOURCE_LABEL": "configured agent telemetry",
+    "AI_DASHBOARD_SOURCE_LABEL": "configured rolling telemetry",
 }
 
 AI_FIELD_NAMES = (
@@ -199,7 +199,7 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
         "top_agent": top_agent_label(agents),
         "model_mix": agent_mix_label(agents),
         "positioning": env_value("AI_DASHBOARD_POSITIONING"),
-        "source_label": "WakaTime AI telemetry",
+        "source_label": f"WakaTime AI telemetry · {display_range(WAKATIME_RANGE)}",
         "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
 
@@ -332,14 +332,14 @@ def render_svg(metrics: dict[str, Any]) -> str:
     <text class="eyebrow" x="130" y="189" text-anchor="middle" font-size="13">AI-driven</text>
 
     <circle class="blue" cx="252" cy="91" r="4"/>
-    <text class="eyebrow" x="267" y="96" font-size="13">AI</text>
+    <text class="eyebrow" x="267" y="96" font-size="13">AI-authored</text>
     <text class="text" x="292" y="99" font-size="20">{xml(metrics['ai_changes'])}</text>
     <line class="track" x1="252" y1="123" x2="1080" y2="123"/>
     <line class="barBlue" x1="252" y1="123" x2="{252 + ai_width}" y2="123"/>
     <text class="muted" x="1110" y="128" text-anchor="end" font-size="15">{xml(ai_display)}</text>
 
     <circle class="green" cx="252" cy="164" r="4"/>
-    <text class="eyebrow" x="267" y="169" font-size="13">Human edits</text>
+    <text class="eyebrow" x="267" y="169" font-size="13">Manual corrections</text>
     <text class="text" x="372" y="172" font-size="20">{xml(metrics['human_changes'])}</text>
     <line class="track" x1="252" y1="196" x2="1080" y2="196"/>
     <line class="barGreen" x1="252" y1="196" x2="{252 + human_width}" y2="196"/>
@@ -372,7 +372,7 @@ def render_svg(metrics: dict[str, Any]) -> str:
     <rect class="panel2" x="816" y="306" width="360" height="152" rx="16"/>
     <rect class="chipGreen" x="840" y="330" width="34" height="34" rx="8"/>
     <text class="green" x="857" y="352" text-anchor="middle" font-size="16">◉</text>
-    <text class="eyebrow" x="892" y="351" font-size="14">Human follow-up</text>
+    <text class="eyebrow" x="892" y="351" font-size="14">Manual correction rate</text>
     <text class="text" x="840" y="402" font-size="38">{xml(metrics['follow_up_rate'])}</text>
     <line class="track" x1="840" y1="424" x2="1100" y2="424"/>
     <line class="barGreen" x1="840" y1="424" x2="{840 + follow_up_width}" y2="424"/>
@@ -402,10 +402,14 @@ def render_svg(metrics: dict[str, Any]) -> str:
   </g>
 
   <text class="text" x="24" y="654" font-size="24">{xml(metrics['positioning'])}</text>
-  <text class="mono" x="24" y="680" font-size="12">source: {xml(metrics['source_label'])} · updated: {xml(metrics['updated_at'])}</text>
+  <text class="mono" x="24" y="680" font-size="12">source: {xml(metrics['source_label'])} · refreshed daily at 06:00 UTC · updated: {xml(metrics['updated_at'])}</text>
 </svg>
 '''
 
+
+
+def display_range(value: str) -> str:
+    return value.replace("_", " ").title()
 
 def env_value(name: str, default: str | None = None) -> str:
     value = os.environ.get(name)
