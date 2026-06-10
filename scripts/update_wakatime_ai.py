@@ -295,7 +295,7 @@ def render_svg(metrics: dict[str, Any]) -> str:
     session_count = session_parts[0]
     session_label = session_parts[1] if len(session_parts) > 1 else "AI sessions"
 
-    return f'''<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+    return f'''<svg width="2400" height="1400" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" preserveAspectRatio="xMidYMid meet" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
   <title id="title">AI-native engineering dashboard</title>
   <desc id="desc">Agentic engineering telemetry dashboard for Marko Miric.</desc>
   <defs>
@@ -306,6 +306,7 @@ def render_svg(metrics: dict[str, Any]) -> str:
   </defs>
   <style>
     .bg {{ fill: #090E16; }}
+    text {{ dominant-baseline: auto; }}
     .panel {{ fill: url(#panelGlow); stroke: #233044; stroke-width: 1; }}
     .panel2 {{ fill: #101722; stroke: #263449; stroke-width: 1; }}
     .eyebrow {{ fill: #8D98AA; font-family: 'Aptos Display', 'Segoe UI', sans-serif; font-weight: 800; letter-spacing: .04em; }}
@@ -323,7 +324,7 @@ def render_svg(metrics: dict[str, Any]) -> str:
 
   <rect class="bg" width="1200" height="700" rx="24"/>
 
-  <g filter="url(#softShadow)">
+  <g>
     <rect class="panel" x="24" y="24" width="1152" height="258" rx="18"/>
     <circle cx="130" cy="153" r="76" stroke="#1F2937" stroke-width="18"/>
     <circle cx="130" cy="153" r="76" stroke="url(#blue)" stroke-width="18" stroke-linecap="round" stroke-dasharray="{ring_dash} {ring_gap}" transform="rotate(-90 130 153)"/>
