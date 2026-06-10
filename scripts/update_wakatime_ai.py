@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import base64
 import html
+import json
 import os
 import re
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -12,6 +16,11 @@ START_MARKER = "<!--START_SECTION:waka-ai-->"
 END_MARKER = "<!--END_SECTION:waka-ai-->"
 README_PATH = Path(os.environ.get("README_PATH", "README.md"))
 SVG_PATH = Path(os.environ.get("AI_DASHBOARD_SVG_PATH", "assets/ai-native-dashboard.svg"))
+WAKATIME_RANGE = os.environ.get("WAKATIME_RANGE", "last_7_days")
+WAKATIME_BASE_URL = os.environ.get(
+    "WAKATIME_BASE_URL",
+    "https://wakatime.com/api/v1/users/current",
+)
 
 DEFAULTS = {
     "AI_DASHBOARD_AI_CHANGES": "18.7K",
@@ -22,18 +31,31 @@ DEFAULTS = {
     "AI_DASHBOARD_OUTPUT_TOKENS": "3M out",
     "AI_DASHBOARD_COST": "$2,628",
     "AI_DASHBOARD_COST_LABEL": "estimated agentic build budget",
-    "AI_DASHBOARD_HUMAN_REVIEW_RATE": "35%",
-    "AI_DASHBOARD_REVIEW_SESSIONS": "246 review sessions",
     "AI_DASHBOARD_PROMPTS": "234 prompts",
     "AI_DASHBOARD_PROMPT_DEPTH": "2.4K chars avg prompt",
     "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
     "AI_DASHBOARD_MODEL_MIX": "Claude 68% · Codex 32%",
     "AI_DASHBOARD_FOLLOW_UP_RATE": "0%",
     "AI_DASHBOARD_FOLLOW_UP_LABEL": "follow-up edit loops",
-    "AI_DASHBOARD_REVIEW_LABEL": "review discipline",
+    "AI_DASHBOARD_SESSIONS": "246 AI sessions",
     "AI_DASHBOARD_POSITIONING": "AI-native engineer: agents for throughput, human judgment for correctness.",
-    "AI_DASHBOARD_SOURCE_LABEL": "agent telemetry",
+    "AI_DASHBOARD_SOURCE_LABEL": "configured agent telemetry",
 }
+
+AI_FIELD_NAMES = (
+    "ai_additions",
+    "ai_deletions",
+    "ai_line_changes_total",
+    "ai_agent_line_changes",
+    "ai_agent_costs",
+    "ai_agent_breakdown",
+    "ai_agent_total_cost",
+    "ai_input_tokens",
+    "ai_output_tokens",
+    "ai_prompt_length_avg",
+    "ai_prompt_events_total",
+    "ai_sessions",
+)
 
 
 def main() -> int:
@@ -45,6 +67,60 @@ def main() -> int:
 
 
 def build_metrics() -> dict[str, Any]:
+    api_key = os.environ.get("WAKATIME_API_KEY", "").strip()
+    if not api_key:
+        return build_fallback_metrics()
+
+    stats = fetch_wakatime_stats(api_key)
+    if not has_wakatime_ai_fields(stats):
+        metrics = build_fallback_metrics()
+        metrics["source_label"] = "configured fallback; WakaTime AI fields unavailable"
+        return metrics
+
+    return build_wakatime_metrics(stats)
+
+
+def fetch_wakatime_stats(api_key: str) -> dict[str, Any]:
+    url = f"{WAKATIME_BASE_URL.rstrip('/')}/stats/{WAKATIME_RANGE}"
+    auth_values = (
+        base64.b64encode(api_key.encode("utf-8")).decode("ascii"),
+        base64.b64encode(f"{api_key}:".encode("utf-8")).decode("ascii"),
+    )
+    last_error: Exception | None = None
+
+    for auth_value in auth_values:
+        request = urllib.request.Request(
+            url,
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Basic {auth_value}",
+                "User-Agent": "markomiric-profile-readme/1.0",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as error:
+            last_error = error
+            if error.code in {401, 403}:
+                continue
+            raise RuntimeError(f"WakaTime API request failed with HTTP {error.code}.") from error
+        except urllib.error.URLError as error:
+            raise RuntimeError(f"WakaTime API request failed: {error.reason}") from error
+
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise RuntimeError("WakaTime API response did not contain a data object.")
+        return data
+
+    raise RuntimeError("WakaTime API authentication failed.") from last_error
+
+
+def has_wakatime_ai_fields(stats: dict[str, Any]) -> bool:
+    return any(field in stats for field in AI_FIELD_NAMES)
+
+
+def build_fallback_metrics() -> dict[str, Any]:
     ai_changes = env_value("AI_DASHBOARD_AI_CHANGES")
     human_changes = env_value("AI_DASHBOARD_HUMAN_CHANGES")
     ai_share = env_value("AI_DASHBOARD_AI_SHARE", "")
@@ -68,19 +144,122 @@ def build_metrics() -> dict[str, Any]:
         "output_tokens": env_value("AI_DASHBOARD_OUTPUT_TOKENS"),
         "cost": env_value("AI_DASHBOARD_COST"),
         "cost_label": env_value("AI_DASHBOARD_COST_LABEL"),
-        "review_rate": env_value("AI_DASHBOARD_HUMAN_REVIEW_RATE"),
-        "review_sessions": env_value("AI_DASHBOARD_REVIEW_SESSIONS"),
+        "follow_up_rate": env_value("AI_DASHBOARD_FOLLOW_UP_RATE"),
+        "follow_up_label": env_value("AI_DASHBOARD_FOLLOW_UP_LABEL"),
+        "sessions": env_value("AI_DASHBOARD_SESSIONS"),
         "prompts": env_value("AI_DASHBOARD_PROMPTS"),
         "prompt_depth": env_value("AI_DASHBOARD_PROMPT_DEPTH"),
         "top_agent": env_value("AI_DASHBOARD_TOP_AGENT"),
         "model_mix": env_value("AI_DASHBOARD_MODEL_MIX"),
-        "follow_up_rate": env_value("AI_DASHBOARD_FOLLOW_UP_RATE"),
-        "follow_up_label": env_value("AI_DASHBOARD_FOLLOW_UP_LABEL"),
-        "review_label": env_value("AI_DASHBOARD_REVIEW_LABEL"),
         "positioning": env_value("AI_DASHBOARD_POSITIONING"),
         "source_label": env_value("AI_DASHBOARD_SOURCE_LABEL"),
         "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     }
+
+
+def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
+    ai_lines = first_positive_number(
+        stats.get("ai_line_changes_total"),
+        number(stats.get("ai_additions")) + number(stats.get("ai_deletions")),
+        sum_agent_lines(stats.get("ai_agent_breakdown")),
+        sum_mapping(stats.get("ai_agent_line_changes")),
+    )
+    human_lines = number(stats.get("human_additions")) + number(stats.get("human_deletions"))
+    total_lines = ai_lines + human_lines
+    ai_percentage = clamp(ai_lines / total_lines * 100, 0, 100) if total_lines else 0
+    follow_up_percentage = clamp(human_lines / total_lines * 100, 0, 100) if total_lines else 0
+
+    input_tokens = number(stats.get("ai_input_tokens"))
+    output_tokens = number(stats.get("ai_output_tokens"))
+    total_tokens = input_tokens + output_tokens
+    prompt_count = number(stats.get("ai_prompt_events_total"))
+    prompt_length = number(stats.get("ai_prompt_length_avg_per_session")) or number(
+        stats.get("ai_prompt_length_avg")
+    )
+    sessions = number(stats.get("ai_sessions"))
+    cost = number(stats.get("ai_agent_total_cost")) or sum_mapping(stats.get("ai_agent_costs"))
+    agents = normalize_agent_breakdown(stats)
+
+    return {
+        "ai_changes": format_compact(ai_lines),
+        "human_changes": format_compact(human_lines),
+        "change_unit": "line changes",
+        "ai_percentage": ai_percentage,
+        "human_percentage": max(100 - ai_percentage, 0),
+        "tokens": format_compact(total_tokens),
+        "input_tokens": f"{format_compact(input_tokens)} in",
+        "output_tokens": f"{format_compact(output_tokens)} out",
+        "cost": format_currency(cost),
+        "cost_label": "estimated WakaTime GenAI cost",
+        "follow_up_rate": format_percentage(follow_up_percentage),
+        "follow_up_label": f"{format_compact(human_lines)} human follow-up changes",
+        "sessions": f"{format_compact(sessions)} AI sessions",
+        "prompts": f"{format_compact(prompt_count)} prompts",
+        "prompt_depth": f"{format_compact(prompt_length)} chars avg prompt",
+        "top_agent": top_agent_label(agents),
+        "model_mix": agent_mix_label(agents),
+        "positioning": env_value("AI_DASHBOARD_POSITIONING"),
+        "source_label": "WakaTime AI telemetry",
+        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+    }
+
+
+def normalize_agent_breakdown(stats: dict[str, Any]) -> list[dict[str, float | str]]:
+    raw_breakdown = stats.get("ai_agent_breakdown")
+    agents: list[dict[str, float | str]] = []
+
+    if isinstance(raw_breakdown, list):
+        for item in raw_breakdown:
+            if not isinstance(item, dict):
+                continue
+            name = item.get("name")
+            if not isinstance(name, str) or not name.strip():
+                continue
+            agents.append(
+                {
+                    "name": name.strip(),
+                    "lines": number(item.get("lines")),
+                    "cost": number(item.get("cost")),
+                }
+            )
+
+    if agents:
+        return sorted(agents, key=lambda agent: float(agent["lines"]), reverse=True)
+
+    line_changes = stats.get("ai_agent_line_changes")
+    costs = stats.get("ai_agent_costs") if isinstance(stats.get("ai_agent_costs"), dict) else {}
+    if isinstance(line_changes, dict):
+        for name, lines in line_changes.items():
+            agents.append(
+                {
+                    "name": str(name),
+                    "lines": number(lines),
+                    "cost": number(costs.get(name)) if isinstance(costs, dict) else 0,
+                }
+            )
+
+    return sorted(agents, key=lambda agent: float(agent["lines"]), reverse=True)
+
+
+def top_agent_label(agents: list[dict[str, float | str]]) -> str:
+    if not agents:
+        return "No agent signal yet"
+    names = [str(agent["name"]) for agent in agents[:2]]
+    return " + ".join(names)
+
+
+def agent_mix_label(agents: list[dict[str, float | str]]) -> str:
+    if not agents:
+        return "Waiting for WakaTime agent breakdown"
+
+    total_lines = sum(float(agent["lines"]) for agent in agents)
+    if total_lines <= 0:
+        return "Agent detected; no line mix yet"
+
+    return " · ".join(
+        f"{agent['name']} {round(float(agent['lines']) / total_lines * 100)}%"
+        for agent in agents[:3]
+    )
 
 
 def update_readme() -> None:
@@ -107,19 +286,18 @@ def render_svg(metrics: dict[str, Any]) -> str:
     human_percentage = float(metrics["human_percentage"])
     ai_width = round(828 * ai_percentage / 100)
     human_width = round(828 * human_percentage / 100)
-    review_width = round(260 * clamp(parse_percentage(metrics["review_rate"]), 0, 100) / 100)
     follow_up_width = round(260 * clamp(parse_percentage(metrics["follow_up_rate"]), 0, 100) / 100)
     ring_dash = round(565.49 * ai_percentage / 100, 2)
     ring_gap = round(565.49 - ring_dash, 2)
     ai_display = format_percentage(ai_percentage)
     human_display = format_percentage(human_percentage)
-    review_parts = metrics["review_sessions"].split(" ", 1)
-    review_count = review_parts[0]
-    review_label = review_parts[1] if len(review_parts) > 1 else metrics["review_label"]
+    session_parts = str(metrics["sessions"]).split(" ", 1)
+    session_count = session_parts[0]
+    session_label = session_parts[1] if len(session_parts) > 1 else "AI sessions"
 
     return f'''<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">AI-native engineering dashboard</title>
-  <desc id="desc">Agentic engineering telemetry dashboard for Marko Mirić.</desc>
+  <desc id="desc">Agentic engineering telemetry dashboard for Marko Miric.</desc>
   <defs>
     <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7AA2FF"/><stop offset="1" stop-color="#3D6DFF"/></linearGradient>
     <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#69D391"/><stop offset="1" stop-color="#2EAD68"/></linearGradient>
@@ -161,7 +339,7 @@ def render_svg(metrics: dict[str, Any]) -> str:
 
     <circle class="green" cx="252" cy="164" r="4"/>
     <text class="eyebrow" x="267" y="169" font-size="13">Human edits</text>
-    <text class="text" x="362" y="172" font-size="20">{xml(metrics['human_changes'])}</text>
+    <text class="text" x="372" y="172" font-size="20">{xml(metrics['human_changes'])}</text>
     <line class="track" x1="252" y1="196" x2="1080" y2="196"/>
     <line class="barGreen" x1="252" y1="196" x2="{252 + human_width}" y2="196"/>
     <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">{xml(human_display)}</text>
@@ -186,38 +364,35 @@ def render_svg(metrics: dict[str, Any]) -> str:
     <rect class="panel2" x="420" y="306" width="360" height="152" rx="16"/>
     <rect class="chipBlue" x="444" y="330" width="34" height="34" rx="8"/>
     <text class="blue" x="461" y="352" text-anchor="middle" font-size="18">$</text>
-    <text class="eyebrow" x="496" y="351" font-size="14">Model spend</text>
+    <text class="eyebrow" x="496" y="351" font-size="14">Agent cost</text>
     <text class="text" x="444" y="402" font-size="38">{xml(metrics['cost'])}</text>
     <text class="muted" x="444" y="432" font-size="14">{xml(metrics['cost_label'])}</text>
 
     <rect class="panel2" x="816" y="306" width="360" height="152" rx="16"/>
     <rect class="chipGreen" x="840" y="330" width="34" height="34" rx="8"/>
     <text class="green" x="857" y="352" text-anchor="middle" font-size="16">◉</text>
-    <text class="eyebrow" x="892" y="351" font-size="14">Human review</text>
-    <text class="text" x="840" y="402" font-size="38">{xml(metrics['review_rate'])}</text>
+    <text class="eyebrow" x="892" y="351" font-size="14">Human follow-up</text>
+    <text class="text" x="840" y="402" font-size="38">{xml(metrics['follow_up_rate'])}</text>
     <line class="track" x1="840" y1="424" x2="1100" y2="424"/>
-    <line class="barGreen" x1="840" y1="424" x2="{840 + review_width}" y2="424"/>
-    <text class="text" x="840" y="450" font-size="14">{xml(review_count)}</text>
-    <text class="muted" x="880" y="450" font-size="14">{xml(review_label)}</text>
+    <line class="barGreen" x1="840" y1="424" x2="{840 + follow_up_width}" y2="424"/>
+    <text class="muted" x="840" y="450" font-size="14">{xml(metrics['follow_up_label'])}</text>
   </g>
 
   <g>
     <rect class="panel2" x="24" y="482" width="270" height="126" rx="14"/>
-    <text class="eyebrow" x="48" y="518" font-size="13">Prompt surface</text>
-    <text class="text" x="48" y="554" font-size="28">{xml(metrics['prompts'])}</text>
-    <text class="muted" x="48" y="582" font-size="13">{xml(metrics['prompt_depth'])}</text>
+    <text class="eyebrow" x="48" y="518" font-size="13">AI sessions</text>
+    <text class="text" x="48" y="554" font-size="28">{xml(session_count)}</text>
+    <text class="muted" x="48" y="582" font-size="13">{xml(session_label)}</text>
 
     <rect class="panel2" x="318" y="482" width="270" height="126" rx="14"/>
-    <text class="eyebrow" x="342" y="518" font-size="13">Top agent stack</text>
-    <text class="text" x="342" y="554" font-size="25">{xml(metrics['top_agent'])}</text>
-    <text class="muted" x="342" y="582" font-size="13">{xml(metrics['model_mix'])}</text>
+    <text class="eyebrow" x="342" y="518" font-size="13">Prompt surface</text>
+    <text class="text" x="342" y="554" font-size="28">{xml(metrics['prompts'])}</text>
+    <text class="muted" x="342" y="582" font-size="13">{xml(metrics['prompt_depth'])}</text>
 
     <rect class="panel2" x="612" y="482" width="270" height="126" rx="14"/>
-    <text class="eyebrow" x="636" y="518" font-size="13">Human follow-up</text>
-    <text class="text" x="636" y="554" font-size="28">{xml(metrics['follow_up_rate'])}</text>
-    <line class="track" x1="636" y1="574" x2="856" y2="574"/>
-    <line class="barGreen" x1="636" y1="574" x2="{636 + follow_up_width}" y2="574"/>
-    <text class="muted" x="636" y="596" font-size="13">{xml(metrics['follow_up_label'])}</text>
+    <text class="eyebrow" x="636" y="518" font-size="13">Top agent stack</text>
+    <text class="text" x="636" y="554" font-size="25">{xml(metrics['top_agent'])}</text>
+    <text class="muted" x="636" y="582" font-size="13">{xml(metrics['model_mix'])}</text>
 
     <rect class="panel2" x="906" y="482" width="270" height="126" rx="14"/>
     <text class="eyebrow" x="930" y="518" font-size="13">Positioning</text>
@@ -238,20 +413,77 @@ def env_value(name: str, default: str | None = None) -> str:
     return value.strip()
 
 
+def number(value: Any) -> float:
+    if isinstance(value, bool) or value is None:
+        return 0.0
+    if isinstance(value, int | float):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.replace(",", ""))
+        except ValueError:
+            return parse_count(value)
+    return 0.0
+
+
+def first_positive_number(*values: Any) -> float:
+    for value in values:
+        numeric = number(value)
+        if numeric > 0:
+            return numeric
+    return 0.0
+
+
+def sum_mapping(value: Any) -> float:
+    if not isinstance(value, dict):
+        return 0.0
+    return sum(number(item) for item in value.values())
+
+
+def sum_agent_lines(value: Any) -> float:
+    if not isinstance(value, list):
+        return 0.0
+    return sum(number(item.get("lines")) for item in value if isinstance(item, dict))
+
+
 def parse_count(value: str) -> float:
     normalized = value.strip().replace(",", "")
     match = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*([KMB])?", normalized, re.IGNORECASE)
     if not match:
         return 0.0
-    number = float(match.group(1))
+    amount = float(match.group(1))
     suffix = (match.group(2) or "").upper()
     multiplier = {"K": 1_000, "M": 1_000_000, "B": 1_000_000_000}.get(suffix, 1)
-    return number * multiplier
+    return amount * multiplier
 
 
-def parse_percentage(value: str) -> float:
-    match = re.search(r"-?[0-9]+(?:\.[0-9]+)?", value)
+def parse_percentage(value: Any) -> float:
+    match = re.search(r"-?[0-9]+(?:\.[0-9]+)?", str(value))
     return float(match.group(0)) if match else 0.0
+
+
+def format_compact(value: float) -> str:
+    value = max(0.0, float(value))
+    if value >= 1_000_000_000:
+        return trim_decimal(value / 1_000_000_000) + "B"
+    if value >= 1_000_000:
+        return trim_decimal(value / 1_000_000) + "M"
+    if value >= 1_000:
+        return trim_decimal(value / 1_000) + "K"
+    return str(round(value))
+
+
+def trim_decimal(value: float) -> str:
+    formatted = f"{value:.1f}"
+    return formatted[:-2] if formatted.endswith(".0") else formatted
+
+
+def format_currency(value: float) -> str:
+    if value >= 1000:
+        return f"${value:,.0f}"
+    if value >= 100:
+        return f"${value:,.0f}"
+    return f"${value:,.2f}"
 
 
 def format_percentage(value: float) -> str:
