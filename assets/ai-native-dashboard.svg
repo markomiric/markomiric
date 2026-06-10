@@ -42,11 +42,11 @@
     <text class="muted" x="1110" y="128" text-anchor="end" font-size="15">100%</text>
 
     <circle class="green" cx="252" cy="164" r="4"/>
-    <text class="eyebrow" x="267" y="169" font-size="13">Manual corrections</text>
-    <text class="text" x="372" y="172" font-size="20">0</text>
+    <text class="eyebrow" x="267" y="169" font-size="13">Review posture</text>
+    <text class="text" x="388" y="172" font-size="20">Human-led</text>
     <line class="track" x1="252" y1="196" x2="1080" y2="196"/>
-    <line class="barGreen" x1="252" y1="196" x2="252" y2="196"/>
-    <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">0%</text>
+    <line class="barGreen" x1="252" y1="196" x2="1080" y2="196"/>
+    <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">human-owned</text>
 
     <line x1="252" y1="226" x2="1080" y2="226" stroke="#1E2937"/>
     <text class="mono" x="252" y="250" font-size="12">&lt;/&gt; 7.5K AI-authored line changes</text>
@@ -75,11 +75,11 @@
     <rect class="panel2" x="816" y="306" width="360" height="152" rx="16"/>
     <rect class="chipGreen" x="840" y="330" width="34" height="34" rx="8"/>
     <text class="green" x="857" y="352" text-anchor="middle" font-size="16">◉</text>
-    <text class="eyebrow" x="892" y="351" font-size="14">Manual correction rate</text>
-    <text class="text" x="840" y="402" font-size="38">0%</text>
+    <text class="eyebrow" x="892" y="351" font-size="14">Review posture</text>
+    <text class="text" x="840" y="402" font-size="38">Human-led</text>
     <line class="track" x1="840" y1="424" x2="1100" y2="424"/>
-    <line class="barGreen" x1="840" y1="424" x2="840" y2="424"/>
-    <text class="muted" x="840" y="450" font-size="14">0 human follow-up changes</text>
+    <line class="barGreen" x1="840" y1="424" x2="1100" y2="424"/>
+    <text class="muted" x="840" y="450" font-size="14">architecture, debugging, release decisions</text>
   </g>
 
   <g>
@@ -105,5 +105,5 @@
   </g>
 
   <text class="text" x="24" y="654" font-size="24">AI-native engineer: agents for throughput, human judgment for correctness.</text>
-  <text class="mono" x="24" y="680" font-size="12">source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-10 16:03 UTC</text>
+  <text class="mono" x="24" y="680" font-size="12">source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-10 16:06 UTC</text>
 </svg>
