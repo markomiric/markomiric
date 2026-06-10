@@ -35,8 +35,8 @@ DEFAULTS = {
     "AI_DASHBOARD_PROMPT_DEPTH": "2.4K chars avg prompt",
     "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
     "AI_DASHBOARD_MODEL_MIX": "Claude 68% · Codex 32%",
-    "AI_DASHBOARD_FOLLOW_UP_RATE": "0%",
-    "AI_DASHBOARD_FOLLOW_UP_LABEL": "manual corrections after AI",
+    "AI_DASHBOARD_REVIEW_POSTURE": "Human-led",
+    "AI_DASHBOARD_REVIEW_POSTURE_LABEL": "architecture, debugging, release decisions",
     "AI_DASHBOARD_SESSIONS": "246 AI sessions",
     "AI_DASHBOARD_POSITIONING": "AI-native engineer: agents for throughput, human judgment for correctness.",
     "AI_DASHBOARD_SOURCE_LABEL": "configured rolling telemetry",
@@ -144,8 +144,8 @@ def build_fallback_metrics() -> dict[str, Any]:
         "output_tokens": env_value("AI_DASHBOARD_OUTPUT_TOKENS"),
         "cost": env_value("AI_DASHBOARD_COST"),
         "cost_label": env_value("AI_DASHBOARD_COST_LABEL"),
-        "follow_up_rate": env_value("AI_DASHBOARD_FOLLOW_UP_RATE"),
-        "follow_up_label": env_value("AI_DASHBOARD_FOLLOW_UP_LABEL"),
+        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
+        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "sessions": env_value("AI_DASHBOARD_SESSIONS"),
         "prompts": env_value("AI_DASHBOARD_PROMPTS"),
         "prompt_depth": env_value("AI_DASHBOARD_PROMPT_DEPTH"),
@@ -167,7 +167,6 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
     human_lines = number(stats.get("human_additions")) + number(stats.get("human_deletions"))
     total_lines = ai_lines + human_lines
     ai_percentage = clamp(ai_lines / total_lines * 100, 0, 100) if total_lines else 0
-    follow_up_percentage = clamp(human_lines / total_lines * 100, 0, 100) if total_lines else 0
 
     input_tokens = number(stats.get("ai_input_tokens"))
     output_tokens = number(stats.get("ai_output_tokens"))
@@ -191,8 +190,8 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
         "output_tokens": f"{format_compact(output_tokens)} out",
         "cost": format_currency(cost),
         "cost_label": "estimated WakaTime GenAI cost",
-        "follow_up_rate": format_percentage(follow_up_percentage),
-        "follow_up_label": f"{format_compact(human_lines)} human follow-up changes",
+        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
+        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "sessions": f"{format_compact(sessions)} AI sessions",
         "prompts": f"{format_compact(prompt_count)} prompts",
         "prompt_depth": f"{format_compact(prompt_length)} chars avg prompt",
@@ -283,14 +282,10 @@ def write_svg(metrics: dict[str, Any]) -> None:
 
 def render_svg(metrics: dict[str, Any]) -> str:
     ai_percentage = float(metrics["ai_percentage"])
-    human_percentage = float(metrics["human_percentage"])
     ai_width = round(828 * ai_percentage / 100)
-    human_width = round(828 * human_percentage / 100)
-    follow_up_width = round(260 * clamp(parse_percentage(metrics["follow_up_rate"]), 0, 100) / 100)
     ring_dash = round(565.49 * ai_percentage / 100, 2)
     ring_gap = round(565.49 - ring_dash, 2)
     ai_display = format_percentage(ai_percentage)
-    human_display = format_percentage(human_percentage)
     session_parts = str(metrics["sessions"]).split(" ", 1)
     session_count = session_parts[0]
     session_label = session_parts[1] if len(session_parts) > 1 else "AI sessions"
@@ -339,11 +334,11 @@ def render_svg(metrics: dict[str, Any]) -> str:
     <text class="muted" x="1110" y="128" text-anchor="end" font-size="15">{xml(ai_display)}</text>
 
     <circle class="green" cx="252" cy="164" r="4"/>
-    <text class="eyebrow" x="267" y="169" font-size="13">Manual corrections</text>
-    <text class="text" x="372" y="172" font-size="20">{xml(metrics['human_changes'])}</text>
+    <text class="eyebrow" x="267" y="169" font-size="13">Review posture</text>
+    <text class="text" x="388" y="172" font-size="20">{xml(metrics['review_posture'])}</text>
     <line class="track" x1="252" y1="196" x2="1080" y2="196"/>
-    <line class="barGreen" x1="252" y1="196" x2="{252 + human_width}" y2="196"/>
-    <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">{xml(human_display)}</text>
+    <line class="barGreen" x1="252" y1="196" x2="1080" y2="196"/>
+    <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">human-owned</text>
 
     <line x1="252" y1="226" x2="1080" y2="226" stroke="#1E2937"/>
     <text class="mono" x="252" y="250" font-size="12">&lt;/&gt; {xml(metrics['ai_changes'])} AI-authored {xml(metrics['change_unit'])}</text>
@@ -372,11 +367,11 @@ def render_svg(metrics: dict[str, Any]) -> str:
     <rect class="panel2" x="816" y="306" width="360" height="152" rx="16"/>
     <rect class="chipGreen" x="840" y="330" width="34" height="34" rx="8"/>
     <text class="green" x="857" y="352" text-anchor="middle" font-size="16">◉</text>
-    <text class="eyebrow" x="892" y="351" font-size="14">Manual correction rate</text>
-    <text class="text" x="840" y="402" font-size="38">{xml(metrics['follow_up_rate'])}</text>
+    <text class="eyebrow" x="892" y="351" font-size="14">Review posture</text>
+    <text class="text" x="840" y="402" font-size="38">{xml(metrics['review_posture'])}</text>
     <line class="track" x1="840" y1="424" x2="1100" y2="424"/>
-    <line class="barGreen" x1="840" y1="424" x2="{840 + follow_up_width}" y2="424"/>
-    <text class="muted" x="840" y="450" font-size="14">{xml(metrics['follow_up_label'])}</text>
+    <line class="barGreen" x1="840" y1="424" x2="1100" y2="424"/>
+    <text class="muted" x="840" y="450" font-size="14">{xml(metrics['review_posture_label'])}</text>
   </g>
 
   <g>
