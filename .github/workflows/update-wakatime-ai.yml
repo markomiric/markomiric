@@ -8,7 +8,6 @@ on:
     paths:
       - README.md
       - scripts/update_wakatime_ai.py
-      - assets/ai-native-dashboard.svg
       - .github/workflows/update-wakatime-ai.yml
   schedule:
     - cron: "0 6 * * *"
@@ -26,14 +25,11 @@ jobs:
       - name: Render dashboard
         env:
           WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
-          AI_DASHBOARD_AI_SHARE: ${{ vars.AI_DASHBOARD_AI_SHARE }}
           AI_DASHBOARD_AI_CHANGES: ${{ vars.AI_DASHBOARD_AI_CHANGES }}
-          AI_DASHBOARD_CHANGE_UNIT: ${{ vars.AI_DASHBOARD_CHANGE_UNIT }}
           AI_DASHBOARD_TOKENS: ${{ vars.AI_DASHBOARD_TOKENS }}
           AI_DASHBOARD_INPUT_TOKENS: ${{ vars.AI_DASHBOARD_INPUT_TOKENS }}
           AI_DASHBOARD_OUTPUT_TOKENS: ${{ vars.AI_DASHBOARD_OUTPUT_TOKENS }}
           AI_DASHBOARD_COST: ${{ vars.AI_DASHBOARD_COST }}
-          AI_DASHBOARD_COST_LABEL: ${{ vars.AI_DASHBOARD_COST_LABEL }}
           AI_DASHBOARD_PROMPTS: ${{ vars.AI_DASHBOARD_PROMPTS }}
           AI_DASHBOARD_PROMPT_DEPTH: ${{ vars.AI_DASHBOARD_PROMPT_DEPTH }}
           AI_DASHBOARD_TOP_AGENT: ${{ vars.AI_DASHBOARD_TOP_AGENT }}
@@ -41,19 +37,18 @@ jobs:
           AI_DASHBOARD_SESSIONS: ${{ vars.AI_DASHBOARD_SESSIONS }}
           AI_DASHBOARD_REVIEW_POSTURE: ${{ vars.AI_DASHBOARD_REVIEW_POSTURE }}
           AI_DASHBOARD_REVIEW_POSTURE_LABEL: ${{ vars.AI_DASHBOARD_REVIEW_POSTURE_LABEL }}
-          AI_DASHBOARD_POSITIONING: ${{ vars.AI_DASHBOARD_POSITIONING }}
           AI_DASHBOARD_SOURCE_LABEL: ${{ vars.AI_DASHBOARD_SOURCE_LABEL }}
         run: python3 scripts/update_wakatime_ai.py
 
       - name: Commit dashboard changes
         run: |
-          if git diff --quiet README.md assets/ai-native-dashboard.svg; then
+          if git diff --quiet README.md; then
             echo "No dashboard changes."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md assets/ai-native-dashboard.svg
+          git add README.md
           git commit -m "chore: update AI dashboard"
           git push

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import base64
-import html
 import json
 import os
 import re
@@ -15,7 +14,6 @@ from typing import Any
 START_MARKER = "<!--START_SECTION:waka-ai-->"
 END_MARKER = "<!--END_SECTION:waka-ai-->"
 README_PATH = Path(os.environ.get("README_PATH", "README.md"))
-SVG_PATH = Path(os.environ.get("AI_DASHBOARD_SVG_PATH", "assets/ai-native-dashboard.svg"))
 WAKATIME_RANGE = os.environ.get("WAKATIME_RANGE", "last_7_days")
 WAKATIME_BASE_URL = os.environ.get(
     "WAKATIME_BASE_URL",
@@ -23,21 +21,18 @@ WAKATIME_BASE_URL = os.environ.get(
 )
 
 DEFAULTS = {
-    "AI_DASHBOARD_AI_CHANGES": "18.7K",
-    "AI_DASHBOARD_CHANGE_UNIT": "line changes",
-    "AI_DASHBOARD_TOKENS": "939.8M",
-    "AI_DASHBOARD_INPUT_TOKENS": "936.8M in",
-    "AI_DASHBOARD_OUTPUT_TOKENS": "3M out",
-    "AI_DASHBOARD_COST": "$2,628",
-    "AI_DASHBOARD_COST_LABEL": "estimated WakaTime GenAI cost",
-    "AI_DASHBOARD_PROMPTS": "234 prompts",
-    "AI_DASHBOARD_PROMPT_DEPTH": "2.4K chars avg prompt",
+    "AI_DASHBOARD_AI_CHANGES": "7.5K",
+    "AI_DASHBOARD_TOKENS": "488.2M",
+    "AI_DASHBOARD_INPUT_TOKENS": "486.7M in",
+    "AI_DASHBOARD_OUTPUT_TOKENS": "1.6M out",
+    "AI_DASHBOARD_COST": "$1,435",
+    "AI_DASHBOARD_PROMPTS": "164 prompts",
+    "AI_DASHBOARD_PROMPT_DEPTH": "3.5K chars avg prompt",
     "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
-    "AI_DASHBOARD_MODEL_MIX": "Claude 68% · Codex 32%",
-    "AI_DASHBOARD_SESSIONS": "246 AI sessions",
-    "AI_DASHBOARD_REVIEW_POSTURE": "Human-led",
-    "AI_DASHBOARD_REVIEW_POSTURE_LABEL": "architecture, debugging, release decisions",
-    "AI_DASHBOARD_POSITIONING": "Operational signal: high-volume agent usage with human-owned engineering decisions.",
+    "AI_DASHBOARD_MODEL_MIX": "Claude 63% · Codex 37%",
+    "AI_DASHBOARD_SESSIONS": "48 AI sessions",
+    "AI_DASHBOARD_REVIEW_POSTURE": "Human-owned",
+    "AI_DASHBOARD_REVIEW_POSTURE_LABEL": "Architecture, debugging, and release decisions stay with me",
     "AI_DASHBOARD_SOURCE_LABEL": "configured rolling telemetry",
 }
 
@@ -59,13 +54,12 @@ AI_FIELD_NAMES = (
 
 def main() -> int:
     metrics = build_metrics()
-    update_readme()
-    write_svg(metrics)
-    print("AI dashboard updated.")
+    update_readme(render_section(metrics))
+    print("AI telemetry section updated.")
     return 0
 
 
-def build_metrics() -> dict[str, Any]:
+def build_metrics() -> dict[str, str]:
     api_key = os.environ.get("WAKATIME_API_KEY", "").strip()
     if not api_key:
         return build_fallback_metrics()
@@ -119,16 +113,12 @@ def has_wakatime_ai_fields(stats: dict[str, Any]) -> bool:
     return any(field in stats for field in AI_FIELD_NAMES)
 
 
-def build_fallback_metrics() -> dict[str, Any]:
+def build_fallback_metrics() -> dict[str, str]:
     return {
         "ai_changes": env_value("AI_DASHBOARD_AI_CHANGES"),
-        "change_unit": env_value("AI_DASHBOARD_CHANGE_UNIT"),
-        "ai_percentage": clamp(parse_percentage(env_value("AI_DASHBOARD_AI_SHARE", "100")), 0, 100),
         "tokens": env_value("AI_DASHBOARD_TOKENS"),
-        "input_tokens": env_value("AI_DASHBOARD_INPUT_TOKENS"),
-        "output_tokens": env_value("AI_DASHBOARD_OUTPUT_TOKENS"),
+        "token_split": f"{env_value('AI_DASHBOARD_INPUT_TOKENS')} · {env_value('AI_DASHBOARD_OUTPUT_TOKENS')}",
         "cost": env_value("AI_DASHBOARD_COST"),
-        "cost_label": env_value("AI_DASHBOARD_COST_LABEL"),
         "sessions": env_value("AI_DASHBOARD_SESSIONS"),
         "prompts": env_value("AI_DASHBOARD_PROMPTS"),
         "prompt_depth": env_value("AI_DASHBOARD_PROMPT_DEPTH"),
@@ -136,23 +126,18 @@ def build_fallback_metrics() -> dict[str, Any]:
         "model_mix": env_value("AI_DASHBOARD_MODEL_MIX"),
         "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
         "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
-        "positioning": env_value("AI_DASHBOARD_POSITIONING"),
         "source_label": env_value("AI_DASHBOARD_SOURCE_LABEL"),
-        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "updated_at": utc_timestamp(),
     }
 
 
-def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
+def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, str]:
     ai_lines = first_positive_number(
         stats.get("ai_line_changes_total"),
         number(stats.get("ai_additions")) + number(stats.get("ai_deletions")),
         sum_agent_lines(stats.get("ai_agent_breakdown")),
         sum_mapping(stats.get("ai_agent_line_changes")),
     )
-    human_lines = number(stats.get("human_additions")) + number(stats.get("human_deletions"))
-    total_lines = ai_lines + human_lines
-    ai_percentage = clamp(ai_lines / total_lines * 100, 0, 100) if total_lines else 0
-
     input_tokens = number(stats.get("ai_input_tokens"))
     output_tokens = number(stats.get("ai_output_tokens"))
     total_tokens = input_tokens + output_tokens
@@ -166,13 +151,9 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "ai_changes": format_compact(ai_lines),
-        "change_unit": "line changes",
-        "ai_percentage": ai_percentage,
         "tokens": format_compact(total_tokens),
-        "input_tokens": f"{format_compact(input_tokens)} in",
-        "output_tokens": f"{format_compact(output_tokens)} out",
+        "token_split": f"{format_compact(input_tokens)} in · {format_compact(output_tokens)} out",
         "cost": format_currency(cost),
-        "cost_label": "estimated WakaTime GenAI cost",
         "sessions": f"{format_compact(sessions)} AI sessions",
         "prompts": f"{format_compact(prompt_count)} prompts",
         "prompt_depth": f"{format_compact(prompt_length)} chars avg prompt",
@@ -180,10 +161,42 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, Any]:
         "model_mix": agent_mix_label(agents),
         "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
         "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
-        "positioning": env_value("AI_DASHBOARD_POSITIONING"),
         "source_label": f"WakaTime AI telemetry · {display_range(WAKATIME_RANGE)}",
-        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "updated_at": utc_timestamp(),
     }
+
+
+def render_section(metrics: dict[str, str]) -> str:
+    return "\n".join(
+        [
+            "**Rolling AI engineering telemetry**",
+            "",
+            "| Signal | Value | Context |",
+            "| --- | ---: | --- |",
+            f"| AI-authored changes | **{cell(metrics['ai_changes'])}** | Agent-generated line changes |",
+            f"| Tokens processed | **{cell(metrics['tokens'])}** | {cell(metrics['token_split'])} |",
+            f"| Agent cost | **{cell(metrics['cost'])}** | Estimated WakaTime GenAI cost |",
+            f"| AI sessions | **{cell(metrics['sessions'])}** | Coding-agent sessions |",
+            f"| Prompt surface | **{cell(metrics['prompts'])}** | {cell(metrics['prompt_depth'])} |",
+            f"| Agent stack | **{cell(metrics['top_agent'])}** | {cell(metrics['model_mix'])} |",
+            f"| Review model | **{cell(metrics['review_posture'])}** | {cell(metrics['review_posture_label'])} |",
+            "",
+            f"<sub>Source: {cell(metrics['source_label'])} · refreshed daily at 06:00 UTC · updated: {cell(metrics['updated_at'])}</sub>",
+        ]
+    )
+
+
+def update_readme(section: str) -> None:
+    readme = README_PATH.read_text(encoding="utf-8")
+    if START_MARKER not in readme or END_MARKER not in readme:
+        raise RuntimeError(
+            f"README must contain both {START_MARKER} and {END_MARKER} markers."
+        )
+
+    before, remainder = readme.split(START_MARKER, 1)
+    _, after = remainder.split(END_MARKER, 1)
+    updated = f"{before}{START_MARKER}\n{section}\n{END_MARKER}{after}"
+    README_PATH.write_text(updated, encoding="utf-8")
 
 
 def normalize_agent_breakdown(stats: dict[str, Any]) -> list[dict[str, float | str]]:
@@ -195,30 +208,21 @@ def normalize_agent_breakdown(stats: dict[str, Any]) -> list[dict[str, float | s
             if not isinstance(item, dict):
                 continue
             name = item.get("name")
-            if not isinstance(name, str) or not name.strip():
-                continue
-            agents.append(
-                {
-                    "name": name.strip(),
-                    "lines": number(item.get("lines")),
-                    "cost": number(item.get("cost")),
-                }
-            )
+            if isinstance(name, str) and name.strip():
+                agents.append(
+                    {
+                        "name": name.strip(),
+                        "lines": number(item.get("lines")),
+                    }
+                )
 
     if agents:
         return sorted(agents, key=lambda agent: float(agent["lines"]), reverse=True)
 
     line_changes = stats.get("ai_agent_line_changes")
-    costs = stats.get("ai_agent_costs") if isinstance(stats.get("ai_agent_costs"), dict) else {}
     if isinstance(line_changes, dict):
         for name, lines in line_changes.items():
-            agents.append(
-                {
-                    "name": str(name),
-                    "lines": number(lines),
-                    "cost": number(costs.get(name)) if isinstance(costs, dict) else 0,
-                }
-            )
+            agents.append({"name": str(name), "lines": number(lines)})
 
     return sorted(agents, key=lambda agent: float(agent["lines"]), reverse=True)
 
@@ -241,146 +245,6 @@ def agent_mix_label(agents: list[dict[str, float | str]]) -> str:
         f"{agent['name']} {round(float(agent['lines']) / total_lines * 100)}%"
         for agent in agents[:3]
     )
-
-
-def update_readme() -> None:
-    readme = README_PATH.read_text(encoding="utf-8")
-    if START_MARKER not in readme or END_MARKER not in readme:
-        raise RuntimeError(
-            f"README must contain both {START_MARKER} and {END_MARKER} markers."
-        )
-
-    section = "![AI-native engineering dashboard](assets/ai-native-dashboard.svg)"
-    before, remainder = readme.split(START_MARKER, 1)
-    _, after = remainder.split(END_MARKER, 1)
-    updated = f"{before}{START_MARKER}\n{section}\n{END_MARKER}{after}"
-    README_PATH.write_text(updated, encoding="utf-8")
-
-
-def write_svg(metrics: dict[str, Any]) -> None:
-    SVG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    SVG_PATH.write_text(render_svg(metrics), encoding="utf-8")
-
-
-def render_svg(metrics: dict[str, Any]) -> str:
-    ai_percentage = float(metrics["ai_percentage"])
-    ai_width = round(828 * ai_percentage / 100)
-    ring_dash = round(565.49 * ai_percentage / 100, 2)
-    ring_gap = round(565.49 - ring_dash, 2)
-    ai_display = format_percentage(ai_percentage)
-    session_parts = str(metrics["sessions"]).split(" ", 1)
-    session_count = session_parts[0]
-    session_label = session_parts[1] if len(session_parts) > 1 else "AI sessions"
-
-    return f'''<svg width="2400" height="1400" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" preserveAspectRatio="xMidYMid meet" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
-  <title id="title">AI-native engineering dashboard</title>
-  <desc id="desc">Agentic engineering telemetry dashboard for Marko Miric.</desc>
-  <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7AA2FF"/><stop offset="1" stop-color="#3D6DFF"/></linearGradient>
-    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#69D391"/><stop offset="1" stop-color="#2EAD68"/></linearGradient>
-    <linearGradient id="panelGlow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#142033"/><stop offset="1" stop-color="#0E1520"/></linearGradient>
-  </defs>
-  <style>
-    .bg {{ fill: #090E16; }}
-    text {{ dominant-baseline: auto; }}
-    .panel {{ fill: url(#panelGlow); stroke: #233044; stroke-width: 1; }}
-    .panel2 {{ fill: #101722; stroke: #263449; stroke-width: 1; }}
-    .eyebrow {{ fill: #8D98AA; font-family: 'Aptos Display', 'Segoe UI', sans-serif; font-weight: 800; letter-spacing: .04em; }}
-    .text {{ fill: #E7EAF0; font-family: 'Aptos Display', 'Segoe UI', sans-serif; font-weight: 850; }}
-    .muted {{ fill: #8F9AAB; font-family: 'Aptos', 'Segoe UI', sans-serif; font-weight: 700; }}
-    .mono {{ fill: #A9B4C4; font-family: 'SFMono-Regular', 'Cascadia Mono', 'Consolas', monospace; font-weight: 700; }}
-    .track {{ stroke: #202938; stroke-width: 6; stroke-linecap: round; }}
-    .barBlue {{ stroke: url(#blue); stroke-width: 6; stroke-linecap: round; }}
-    .barGreen {{ stroke: url(#green); stroke-width: 6; stroke-linecap: round; }}
-    .chipBlue {{ fill: #13264D; }}
-    .chipGreen {{ fill: #123525; }}
-    .blue {{ fill: #5D8AFF; }}
-    .green {{ fill: #55C083; }}
-  </style>
-
-  <rect class="bg" width="1200" height="700" rx="24"/>
-
-  <g>
-    <rect class="panel" x="24" y="24" width="1152" height="258" rx="18"/>
-    <circle cx="130" cy="153" r="76" stroke="#1F2937" stroke-width="18"/>
-    <circle cx="130" cy="153" r="76" stroke="url(#blue)" stroke-width="18" stroke-linecap="round" stroke-dasharray="{ring_dash} {ring_gap}" transform="rotate(-90 130 153)"/>
-    <text class="text" x="130" y="152" text-anchor="middle" font-size="34">AI</text>
-    <text class="eyebrow" x="130" y="184" text-anchor="middle" font-size="13">assisted delivery</text>
-
-    <circle class="blue" cx="252" cy="91" r="4"/>
-    <text class="eyebrow" x="267" y="96" font-size="13">AI-authored changes</text>
-    <text class="text" x="445" y="99" font-size="20">{xml(metrics['ai_changes'])}</text>
-    <line class="track" x1="252" y1="123" x2="1080" y2="123"/>
-    <line class="barBlue" x1="252" y1="123" x2="{252 + ai_width}" y2="123"/>
-    <text class="muted" x="1110" y="128" text-anchor="end" font-size="15">delivery signal</text>
-
-    <circle class="green" cx="252" cy="164" r="4"/>
-    <text class="eyebrow" x="267" y="169" font-size="13">Review posture</text>
-    <text class="text" x="405" y="172" font-size="20">{xml(metrics['review_posture'])}</text>
-    <line class="track" x1="252" y1="196" x2="1080" y2="196"/>
-    <line class="barGreen" x1="252" y1="196" x2="1080" y2="196"/>
-    <text class="muted" x="1110" y="201" text-anchor="end" font-size="15">decision layer</text>
-
-    <line x1="252" y1="226" x2="1080" y2="226" stroke="#1E2937"/>
-    <text class="mono" x="252" y="250" font-size="12">&lt;/&gt; {xml(metrics['ai_changes'])} AI-authored {xml(metrics['change_unit'])}</text>
-  </g>
-
-  <g>
-    <rect class="panel2" x="24" y="306" width="360" height="152" rx="16"/>
-    <rect class="chipBlue" x="48" y="330" width="34" height="34" rx="8"/>
-    <text class="blue" x="65" y="352" text-anchor="middle" font-size="18">↔</text>
-    <text class="eyebrow" x="100" y="351" font-size="14">Tokens</text>
-    <text class="text" x="48" y="398" font-size="36">{xml(metrics['tokens'])}</text>
-    <line class="track" x1="48" y1="420" x2="340" y2="420"/>
-    <line class="barBlue" x1="48" y1="420" x2="340" y2="420"/>
-    <circle class="blue" cx="52" cy="443" r="4"/>
-    <text class="muted" x="66" y="448" font-size="13">{xml(metrics['input_tokens'])}</text>
-    <circle fill="#93C5FD" cx="178" cy="443" r="4"/>
-    <text class="muted" x="192" y="448" font-size="13">{xml(metrics['output_tokens'])}</text>
-
-    <rect class="panel2" x="420" y="306" width="360" height="152" rx="16"/>
-    <rect class="chipBlue" x="444" y="330" width="34" height="34" rx="8"/>
-    <text class="blue" x="461" y="352" text-anchor="middle" font-size="18">$</text>
-    <text class="eyebrow" x="496" y="351" font-size="14">Agent cost</text>
-    <text class="text" x="444" y="402" font-size="38">{xml(metrics['cost'])}</text>
-    <text class="muted" x="444" y="432" font-size="14">{xml(metrics['cost_label'])}</text>
-
-    <rect class="panel2" x="816" y="306" width="360" height="152" rx="16"/>
-    <rect class="chipGreen" x="840" y="330" width="34" height="34" rx="8"/>
-    <text class="green" x="857" y="352" text-anchor="middle" font-size="16">◉</text>
-    <text class="eyebrow" x="892" y="351" font-size="14">Review posture</text>
-    <text class="text" x="840" y="402" font-size="38">{xml(metrics['review_posture'])}</text>
-    <line class="track" x1="840" y1="424" x2="1100" y2="424"/>
-    <line class="barGreen" x1="840" y1="424" x2="1100" y2="424"/>
-    <text class="muted" x="840" y="450" font-size="14">{xml(metrics['review_posture_label'])}</text>
-  </g>
-
-  <g>
-    <rect class="panel2" x="24" y="482" width="270" height="126" rx="14"/>
-    <text class="eyebrow" x="48" y="518" font-size="13">AI sessions</text>
-    <text class="text" x="48" y="554" font-size="28">{xml(session_count)}</text>
-    <text class="muted" x="48" y="582" font-size="13">{xml(session_label)}</text>
-
-    <rect class="panel2" x="318" y="482" width="270" height="126" rx="14"/>
-    <text class="eyebrow" x="342" y="518" font-size="13">Prompt surface</text>
-    <text class="text" x="342" y="554" font-size="28">{xml(metrics['prompts'])}</text>
-    <text class="muted" x="342" y="582" font-size="13">{xml(metrics['prompt_depth'])}</text>
-
-    <rect class="panel2" x="612" y="482" width="270" height="126" rx="14"/>
-    <text class="eyebrow" x="636" y="518" font-size="13">Top agent stack</text>
-    <text class="text" x="636" y="554" font-size="25">{xml(metrics['top_agent'])}</text>
-    <text class="muted" x="636" y="582" font-size="13">{xml(metrics['model_mix'])}</text>
-
-    <rect class="panel2" x="906" y="482" width="270" height="126" rx="14"/>
-    <text class="eyebrow" x="930" y="518" font-size="13">Review model</text>
-    <text class="text" x="930" y="550" font-size="23">Human-owned</text>
-    <text class="muted" x="930" y="580" font-size="13">final decisions stay with me</text>
-  </g>
-
-  <text class="text" x="24" y="654" font-size="24">{xml(metrics['positioning'])}</text>
-  <text class="mono" x="24" y="680" font-size="12">source: {xml(metrics['source_label'])} · refreshed daily at 06:00 UTC · updated: {xml(metrics['updated_at'])}</text>
-</svg>
-'''
 
 
 def env_value(name: str, default: str | None = None) -> str:
@@ -461,13 +325,6 @@ def format_currency(value: float) -> str:
     return f"${value:,.2f}"
 
 
-def format_percentage(value: float) -> str:
-    value = clamp(value, 0, 100)
-    if abs(value - round(value)) < 0.05:
-        return f"{round(value)}%"
-    return f"{value:.1f}%"
-
-
 def display_range(value: str) -> str:
     return value.replace("_", " ").title()
 
@@ -476,8 +333,12 @@ def clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(maximum, value))
 
 
-def xml(value: Any) -> str:
-    return html.escape(str(value), quote=True)
+def cell(value: Any) -> str:
+    return str(value).replace("\n", " ").replace("|", "\\|")
+
+
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
 
 if __name__ == "__main__":
