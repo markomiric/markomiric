@@ -19,5 +19,5 @@ I use AI coding agents daily to accelerate implementation while keeping architec
 | Agent stack | **Claude + Codex** | Claude 63% · Codex 37% |
 | Review model | **Human-owned** | Architecture, debugging, and release decisions stay with me |
 
-<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-11 05:21 UTC</sub>
+<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-11 07:44 UTC</sub>
 <!--END_SECTION:waka-ai-->
