@@ -11,13 +11,13 @@ I use AI coding agents daily to accelerate implementation while keeping architec
 
 | Signal | Value | Context |
 | --- | ---: | --- |
-| AI-authored changes | **25.9K** | Agent-generated line changes |
-| Tokens processed | **3B** | 3B in · 4.1M out |
-| Agent cost | **$8,708** | Estimated WakaTime GenAI cost |
-| AI sessions | **59 AI sessions** | Coding-agent sessions |
-| Prompt surface | **283 prompts** | 4.1K chars avg prompt |
-| Agent stack | **Claude + Codex** | Claude 80% · Codex 20% |
+| AI-authored changes | **29K** | Agent-generated line changes |
+| Tokens processed | **3.1B** | 3.1B in · 4.4M out |
+| Agent cost | **$8,913** | Estimated WakaTime GenAI cost |
+| AI sessions | **70 AI sessions** | Coding-agent sessions |
+| Prompt surface | **300 prompts** | 5.1K chars avg prompt |
+| Agent stack | **Claude + Codex** | Claude 85% · Codex 15% |
 | Review model | **Human-owned** | Architecture, debugging, and release decisions stay with me |
 
-<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-15 08:03 UTC</sub>
+<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-16 08:01 UTC</sub>
 <!--END_SECTION:waka-ai-->
