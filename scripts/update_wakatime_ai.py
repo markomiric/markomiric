@@ -22,15 +22,8 @@ WAKATIME_BASE_URL = os.environ.get(
 
 DEFAULTS = {
     "AI_DASHBOARD_AI_CHANGES": "7.5K",
-    "AI_DASHBOARD_TOKENS": "488.2M",
-    "AI_DASHBOARD_INPUT_TOKENS": "486.7M in",
-    "AI_DASHBOARD_OUTPUT_TOKENS": "1.6M out",
-    "AI_DASHBOARD_COST": "$1,435",
-    "AI_DASHBOARD_PROMPTS": "164 prompts",
-    "AI_DASHBOARD_PROMPT_DEPTH": "3.5K chars avg prompt",
     "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
     "AI_DASHBOARD_MODEL_MIX": "Claude 63% · Codex 37%",
-    "AI_DASHBOARD_SESSIONS": "48 AI sessions",
     "AI_DASHBOARD_REVIEW_POSTURE": "Human-owned",
     "AI_DASHBOARD_REVIEW_POSTURE_LABEL": "Architecture, debugging, and release decisions stay with me",
     "AI_DASHBOARD_SOURCE_LABEL": "configured rolling telemetry",
@@ -41,14 +34,7 @@ AI_FIELD_NAMES = (
     "ai_deletions",
     "ai_line_changes_total",
     "ai_agent_line_changes",
-    "ai_agent_costs",
     "ai_agent_breakdown",
-    "ai_agent_total_cost",
-    "ai_input_tokens",
-    "ai_output_tokens",
-    "ai_prompt_length_avg",
-    "ai_prompt_events_total",
-    "ai_sessions",
 )
 
 
@@ -116,12 +102,6 @@ def has_wakatime_ai_fields(stats: dict[str, Any]) -> bool:
 def build_fallback_metrics() -> dict[str, str]:
     return {
         "ai_changes": env_value("AI_DASHBOARD_AI_CHANGES"),
-        "tokens": env_value("AI_DASHBOARD_TOKENS"),
-        "token_split": f"{env_value('AI_DASHBOARD_INPUT_TOKENS')} · {env_value('AI_DASHBOARD_OUTPUT_TOKENS')}",
-        "cost": env_value("AI_DASHBOARD_COST"),
-        "sessions": env_value("AI_DASHBOARD_SESSIONS"),
-        "prompts": env_value("AI_DASHBOARD_PROMPTS"),
-        "prompt_depth": env_value("AI_DASHBOARD_PROMPT_DEPTH"),
         "top_agent": env_value("AI_DASHBOARD_TOP_AGENT"),
         "model_mix": env_value("AI_DASHBOARD_MODEL_MIX"),
         "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
@@ -138,25 +118,10 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, str]:
         sum_agent_lines(stats.get("ai_agent_breakdown")),
         sum_mapping(stats.get("ai_agent_line_changes")),
     )
-    input_tokens = number(stats.get("ai_input_tokens"))
-    output_tokens = number(stats.get("ai_output_tokens"))
-    total_tokens = input_tokens + output_tokens
-    prompt_count = number(stats.get("ai_prompt_events_total"))
-    prompt_length = number(stats.get("ai_prompt_length_avg_per_session")) or number(
-        stats.get("ai_prompt_length_avg")
-    )
-    sessions = number(stats.get("ai_sessions"))
-    cost = number(stats.get("ai_agent_total_cost")) or sum_mapping(stats.get("ai_agent_costs"))
     agents = normalize_agent_breakdown(stats)
 
     return {
         "ai_changes": format_compact(ai_lines),
-        "tokens": format_compact(total_tokens),
-        "token_split": f"{format_compact(input_tokens)} in · {format_compact(output_tokens)} out",
-        "cost": format_currency(cost),
-        "sessions": f"{format_compact(sessions)} AI sessions",
-        "prompts": f"{format_compact(prompt_count)} prompts",
-        "prompt_depth": f"{format_compact(prompt_length)} chars avg prompt",
         "top_agent": top_agent_label(agents),
         "model_mix": agent_mix_label(agents),
         "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
@@ -173,13 +138,9 @@ def render_section(metrics: dict[str, str]) -> str:
             "",
             "| Signal | Value | Context |",
             "| --- | ---: | --- |",
-            f"| AI-authored changes | **{cell(metrics['ai_changes'])}** | Agent-generated line changes |",
-            f"| Tokens processed | **{cell(metrics['tokens'])}** | {cell(metrics['token_split'])} |",
-            f"| Agent cost | **{cell(metrics['cost'])}** | Estimated WakaTime GenAI cost |",
-            f"| AI sessions | **{cell(metrics['sessions'])}** | Coding-agent sessions |",
-            f"| Prompt surface | **{cell(metrics['prompts'])}** | {cell(metrics['prompt_depth'])} |",
-            f"| Agent stack | **{cell(metrics['top_agent'])}** | {cell(metrics['model_mix'])} |",
             f"| Review model | **{cell(metrics['review_posture'])}** | {cell(metrics['review_posture_label'])} |",
+            f"| AI-authored changes | **{cell(metrics['ai_changes'])}** | Agent-generated line changes |",
+            f"| Agent stack | **{cell(metrics['top_agent'])}** | {cell(metrics['model_mix'])} |",
             "",
             f"<sub>Source: {cell(metrics['source_label'])} · refreshed daily at 06:00 UTC · updated: {cell(metrics['updated_at'])}</sub>",
         ]
@@ -317,12 +278,6 @@ def format_compact(value: float) -> str:
 def trim_decimal(value: float) -> str:
     formatted = f"{value:.1f}"
     return formatted[:-2] if formatted.endswith(".0") else formatted
-
-
-def format_currency(value: float) -> str:
-    if value >= 100:
-        return f"${value:,.0f}"
-    return f"${value:,.2f}"
 
 
 def display_range(value: str) -> str:
