@@ -22,10 +22,11 @@ WAKATIME_BASE_URL = os.environ.get(
 
 DEFAULTS = {
     "AI_DASHBOARD_AI_CHANGES": "7.5K",
+    "AI_DASHBOARD_TOKENS": "488.2M",
+    "AI_DASHBOARD_INPUT_TOKENS": "486.7M in",
+    "AI_DASHBOARD_OUTPUT_TOKENS": "1.6M out",
     "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
     "AI_DASHBOARD_MODEL_MIX": "Claude 63% · Codex 37%",
-    "AI_DASHBOARD_REVIEW_POSTURE": "Human-owned",
-    "AI_DASHBOARD_REVIEW_POSTURE_LABEL": "Architecture, debugging, and release decisions stay with me",
     "AI_DASHBOARD_SOURCE_LABEL": "configured rolling telemetry",
 }
 
@@ -35,6 +36,8 @@ AI_FIELD_NAMES = (
     "ai_line_changes_total",
     "ai_agent_line_changes",
     "ai_agent_breakdown",
+    "ai_input_tokens",
+    "ai_output_tokens",
 )
 
 
@@ -102,10 +105,10 @@ def has_wakatime_ai_fields(stats: dict[str, Any]) -> bool:
 def build_fallback_metrics() -> dict[str, str]:
     return {
         "ai_changes": env_value("AI_DASHBOARD_AI_CHANGES"),
+        "tokens": env_value("AI_DASHBOARD_TOKENS"),
+        "token_split": f"{env_value('AI_DASHBOARD_INPUT_TOKENS')} · {env_value('AI_DASHBOARD_OUTPUT_TOKENS')}",
         "top_agent": env_value("AI_DASHBOARD_TOP_AGENT"),
         "model_mix": env_value("AI_DASHBOARD_MODEL_MIX"),
-        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
-        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "source_label": env_value("AI_DASHBOARD_SOURCE_LABEL"),
         "updated_at": utc_timestamp(),
     }
@@ -118,14 +121,16 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, str]:
         sum_agent_lines(stats.get("ai_agent_breakdown")),
         sum_mapping(stats.get("ai_agent_line_changes")),
     )
+    input_tokens = number(stats.get("ai_input_tokens"))
+    output_tokens = number(stats.get("ai_output_tokens"))
     agents = normalize_agent_breakdown(stats)
 
     return {
         "ai_changes": format_compact(ai_lines),
+        "tokens": format_compact(input_tokens + output_tokens),
+        "token_split": f"{format_compact(input_tokens)} in · {format_compact(output_tokens)} out",
         "top_agent": top_agent_label(agents),
         "model_mix": agent_mix_label(agents),
-        "review_posture": env_value("AI_DASHBOARD_REVIEW_POSTURE"),
-        "review_posture_label": env_value("AI_DASHBOARD_REVIEW_POSTURE_LABEL"),
         "source_label": f"WakaTime AI telemetry · {display_range(WAKATIME_RANGE)}",
         "updated_at": utc_timestamp(),
     }
@@ -138,8 +143,8 @@ def render_section(metrics: dict[str, str]) -> str:
             "",
             "| Signal | Value | Context |",
             "| --- | ---: | --- |",
-            f"| Review model | **{cell(metrics['review_posture'])}** | {cell(metrics['review_posture_label'])} |",
             f"| AI-authored changes | **{cell(metrics['ai_changes'])}** | Agent-generated line changes |",
+            f"| Tokens processed | **{cell(metrics['tokens'])}** | {cell(metrics['token_split'])} |",
             f"| Agent stack | **{cell(metrics['top_agent'])}** | {cell(metrics['model_mix'])} |",
             "",
             f"<sub>Source: {cell(metrics['source_label'])} · refreshed daily at 06:00 UTC · updated: {cell(metrics['updated_at'])}</sub>",
