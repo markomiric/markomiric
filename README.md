@@ -15,5 +15,5 @@ AI agents write most of my code. The numbers refresh daily.
 | Tokens processed | **858.7M** | 855.8M in · 2.9M out |
 | Agent stack | **Claude + GPT** | Claude 98% · GPT 2% |
 
-<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-24 00:31 UTC</sub>
+<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-06-24 07:14 UTC</sub>
 <!--END_SECTION:waka-ai-->
