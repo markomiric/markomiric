@@ -11,9 +11,9 @@ AI agents write most of my code. The numbers refresh daily.
 
 | Signal | Value | Context |
 | --- | ---: | --- |
-| AI-authored changes | **31.6K** | Agent-generated line changes |
-| Tokens processed | **1.7B** | 1.7B in · 7M out |
-| Agent stack | **Opus + Sonnet** | Opus 45% · Sonnet 23% · Claude 19% |
+| AI-authored changes | **28.6K** | Agent-generated line changes |
+| Tokens processed | **1.5B** | 1.5B in · 6.7M out |
+| Agent stack | **Opus + Sonnet** | Opus 52% · Sonnet 27% · GPT 12% |
 
-<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-07-05 08:49 UTC</sub>
+<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-07-06 10:14 UTC</sub>
 <!--END_SECTION:waka-ai-->
