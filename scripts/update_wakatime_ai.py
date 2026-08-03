@@ -25,8 +25,6 @@ DEFAULTS = {
     "AI_DASHBOARD_TOKENS": "488.2M",
     "AI_DASHBOARD_INPUT_TOKENS": "486.7M in",
     "AI_DASHBOARD_OUTPUT_TOKENS": "1.6M out",
-    "AI_DASHBOARD_TOP_AGENT": "Claude + Codex",
-    "AI_DASHBOARD_MODEL_MIX": "Claude 63% · Codex 37%",
     "AI_DASHBOARD_SOURCE_LABEL": "configured rolling telemetry",
 }
 
@@ -107,8 +105,6 @@ def build_fallback_metrics() -> dict[str, str]:
         "ai_changes": env_value("AI_DASHBOARD_AI_CHANGES"),
         "tokens": env_value("AI_DASHBOARD_TOKENS"),
         "token_split": f"{env_value('AI_DASHBOARD_INPUT_TOKENS')} · {env_value('AI_DASHBOARD_OUTPUT_TOKENS')}",
-        "top_agent": env_value("AI_DASHBOARD_TOP_AGENT"),
-        "model_mix": env_value("AI_DASHBOARD_MODEL_MIX"),
         "source_label": env_value("AI_DASHBOARD_SOURCE_LABEL"),
         "updated_at": utc_timestamp(),
     }
@@ -123,33 +119,31 @@ def build_wakatime_metrics(stats: dict[str, Any]) -> dict[str, str]:
     )
     input_tokens = number(stats.get("ai_input_tokens"))
     output_tokens = number(stats.get("ai_output_tokens"))
-    agents = normalize_agent_breakdown(stats)
 
     return {
         "ai_changes": format_compact(ai_lines),
         "tokens": format_compact(input_tokens + output_tokens),
         "token_split": f"{format_compact(input_tokens)} in · {format_compact(output_tokens)} out",
-        "top_agent": top_agent_label(agents),
-        "model_mix": agent_mix_label(agents),
         "source_label": f"WakaTime AI telemetry · {display_range(WAKATIME_RANGE)}",
         "updated_at": utc_timestamp(),
     }
 
 
 def render_section(metrics: dict[str, str]) -> str:
-    return "\n".join(
+    lines = [
+        f"**{display_range(WAKATIME_RANGE)}**",
+        "",
+        f"- **{cell(metrics['ai_changes'])}** agent-generated line changes",
+        f"- **{cell(metrics['tokens'])}** model tokens reported — {cell(metrics['token_split'])}",
+    ]
+
+    lines.extend(
         [
-            "**Rolling AI engineering telemetry**",
-            "",
-            "| Signal | Value | Context |",
-            "| --- | ---: | --- |",
-            f"| AI-authored changes | **{cell(metrics['ai_changes'])}** | Agent-generated line changes |",
-            f"| Tokens processed | **{cell(metrics['tokens'])}** | {cell(metrics['token_split'])} |",
-            f"| Agent stack | **{cell(metrics['top_agent'])}** | {cell(metrics['model_mix'])} |",
             "",
             f"<sub>Source: {cell(metrics['source_label'])} · refreshed daily at 06:00 UTC · updated: {cell(metrics['updated_at'])}</sub>",
         ]
     )
+    return "\n".join(lines)
 
 
 def update_readme(section: str) -> None:
@@ -163,54 +157,6 @@ def update_readme(section: str) -> None:
     _, after = remainder.split(END_MARKER, 1)
     updated = f"{before}{START_MARKER}\n{section}\n{END_MARKER}{after}"
     README_PATH.write_text(updated, encoding="utf-8")
-
-
-def normalize_agent_breakdown(stats: dict[str, Any]) -> list[dict[str, float | str]]:
-    raw_breakdown = stats.get("ai_agent_breakdown")
-    agents: list[dict[str, float | str]] = []
-
-    if isinstance(raw_breakdown, list):
-        for item in raw_breakdown:
-            if not isinstance(item, dict):
-                continue
-            name = item.get("name")
-            if isinstance(name, str) and name.strip():
-                agents.append(
-                    {
-                        "name": name.strip(),
-                        "lines": number(item.get("lines")),
-                    }
-                )
-
-    if agents:
-        return sorted(agents, key=lambda agent: float(agent["lines"]), reverse=True)
-
-    line_changes = stats.get("ai_agent_line_changes")
-    if isinstance(line_changes, dict):
-        for name, lines in line_changes.items():
-            agents.append({"name": str(name), "lines": number(lines)})
-
-    return sorted(agents, key=lambda agent: float(agent["lines"]), reverse=True)
-
-
-def top_agent_label(agents: list[dict[str, float | str]]) -> str:
-    if not agents:
-        return "No agent signal yet"
-    return " + ".join(str(agent["name"]) for agent in agents[:2])
-
-
-def agent_mix_label(agents: list[dict[str, float | str]]) -> str:
-    if not agents:
-        return "Waiting for WakaTime agent breakdown"
-
-    total_lines = sum(float(agent["lines"]) for agent in agents)
-    if total_lines <= 0:
-        return "Agent detected; no line mix yet"
-
-    return " · ".join(
-        f"{agent['name']} {round(float(agent['lines']) / total_lines * 100)}%"
-        for agent in agents[:3]
-    )
 
 
 def env_value(name: str, default: str | None = None) -> str:
