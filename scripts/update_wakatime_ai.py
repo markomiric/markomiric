@@ -134,7 +134,7 @@ def render_section(metrics: dict[str, str]) -> str:
         f"**{display_range(WAKATIME_RANGE)}**",
         "",
         f"- **{cell(metrics['ai_changes'])}** agent-generated line changes",
-        f"- **{cell(metrics['tokens'])}** model tokens reported — {cell(metrics['token_split'])}",
+        f"- **{cell(metrics['tokens'])}** model tokens reported ({cell(metrics['token_split'])})",
     ]
 
     lines.extend(

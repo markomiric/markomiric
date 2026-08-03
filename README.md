@@ -1,26 +1,26 @@
 # Marko Mirić
 
-**Senior Software Engineer building reliable backend systems, AI-enabled products, and developer tools.**
+**Senior Software Engineer working across backend systems, AI products, web, and mobile.**
 
-I turn complex workflows into production software—from APIs and data systems to web and desktop applications. My focus is secure architecture, measurable delivery, and products that are straightforward to operate.
+I enjoy turning complicated ideas into software people can actually use. My work spans APIs, data systems, web and mobile apps, and developer tools. I care about reliability, security, and shipping work that has been properly tested.
 
 [Portfolio](https://kamacode.dev) · Based in Croatia
 
 ## Featured project
 
-[**Augmeter**](https://github.com/markomiric/augmeter) is an open-source, privacy-first VS Code extension that makes coding-assistant activity and connected provider usage easier to understand without sending local activity off-device.
+[**Augmeter**](https://github.com/markomiric/augmeter) is an open-source VS Code extension I built to make coding-assistant activity and connected provider usage easier to understand. It keeps local activity on your device and ships with zero runtime dependencies.
 
 `196+ Marketplace installs` · `Zero runtime dependencies` · `TypeScript`
 
 [Install from the Marketplace](https://marketplace.visualstudio.com/items?itemName=kamacode.augmeter) · [View source](https://github.com/markomiric/augmeter)
 
-## Core stack
+## Tools I use often
 
-`TypeScript` · `Python` · `PostgreSQL` · `FastAPI` · `Vue/Nuxt` · `React` · `Cloudflare`
+`TypeScript` · `Python` · `React` · `React Native` · `Vue / Nuxt` · `FastAPI` · `PostgreSQL` · `Cloudflare`
 
-## AI-assisted engineering
+## How I use AI
 
-AI agents accelerate implementation; I remain accountable for architecture, review, testing, and releases.
+I use AI agents to move faster, but I still own the architecture, reviews, testing, and releases.
 
 <details>
 <summary><strong>Rolling 7-day telemetry</strong></summary>
@@ -29,7 +29,7 @@ AI agents accelerate implementation; I remain accountable for architecture, revi
 **Last 7 Days**
 
 - **91.1K** agent-generated line changes
-- **5.8B** model tokens reported — 5.8B in · 16M out
+- **5.8B** model tokens reported (5.8B in · 16M out)
 
 <sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-08-03 11:58 UTC</sub>
 <!--END_SECTION:waka-ai-->
