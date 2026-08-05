@@ -28,10 +28,10 @@ I use AI agents to move faster, but I still own the architecture, reviews, testi
 <!--START_SECTION:waka-ai-->
 **Last 7 Days**
 
-- **92K** agent-generated line changes
-- **3.8B** model tokens reported (3.8B in · 11.7M out)
+- **85.4K** agent-generated line changes
+- **3.5B** model tokens reported (3.5B in · 11M out)
 
-<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-08-04 08:32 UTC</sub>
+<sub>Source: WakaTime AI telemetry · Last 7 Days · refreshed daily at 06:00 UTC · updated: 2026-08-05 08:31 UTC</sub>
 <!--END_SECTION:waka-ai-->
 
 </details>
