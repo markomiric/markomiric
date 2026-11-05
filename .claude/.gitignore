@@ -1,0 +1,12 @@
+# Machine-local Claude state
+settings.local.json
+backups/
+tasks/
+worktrees/
+reviews/
+*.log
+hooks/*/state/
+hooks/*/logs/
+skills/skill-rules-state.json
+hooks/SkillActivationHook/recommendation-log.json
+hooks/ReportGateHook/pushback-state.json

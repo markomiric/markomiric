@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "skills": {
+    "codex-review": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Use Codex for a scoped read-only second review after the project checks.",
+      "promptTriggers": {
+        "keywords": [
+          "codex review",
+          "codex-review",
+          "have codex",
+          "second opinion"
+        ],
+        "intentPatterns": [
+          "(have|ask|let).*?codex.*?(review|check|audit)"
+        ]
+      }
+    },
+    "project-checks": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Select local verification for the public profile and telemetry updater.",
+      "promptTriggers": {
+        "keywords": [
+          "project checks",
+          "project-checks",
+          "which tests",
+          "verify this change"
+        ],
+        "intentPatterns": [
+          "(which|what).*?(checks|tests).*?(run|verify)"
+        ]
+      }
+    },
+    "session-management": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Resume or hand off a project task using its approved plan and Git state.",
+      "promptTriggers": {
+        "keywords": [
+          "session-management",
+          "session management"
+        ]
+      }
+    },
+    "sub-agent-invocation": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Assign bounded work to project specialists when delegation is authorized.",
+      "promptTriggers": {
+        "keywords": [
+          "sub-agent-invocation",
+          "sub agent invocation"
+        ]
+      }
+    },
+    "git-commits": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Prepare a scoped Git commit when the user explicitly asks for one.",
+      "promptTriggers": {
+        "keywords": [
+          "git-commits",
+          "git commits"
+        ]
+      }
+    }
+  }
+}
